@@ -21,6 +21,29 @@ export async function POST(request: Request) {
       );
     }
 
+    const config = getGoogleSmtpConfig();
+    const authorizedRecipients = [
+      (config?.user || "").toLowerCase().trim(),
+      (process.env.ADMIN_ALERT_EMAIL || "").toLowerCase().trim(),
+    ].filter(Boolean);
+
+    const cleanTo = to.trim().toLowerCase();
+    const adminKey = request.headers.get("x-admin-key");
+    const isAuthorized =
+      authorizedRecipients.length === 0 ||
+      authorizedRecipients.includes(cleanTo) ||
+      (process.env.ADMIN_SECRET_KEY && adminKey === process.env.ADMIN_SECRET_KEY);
+
+    if (!isAuthorized) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Test email dispatch is restricted to verified administrators (${authorizedRecipients[0]}).`,
+        },
+        { status: 403 }
+      );
+    }
+
     const type = templateType || "shield_alert";
     let subject = "";
     let html = "";
@@ -40,7 +63,7 @@ export async function POST(request: Request) {
         grievanceText:
           customData?.grievanceText ||
           "Had to wait 25 minutes past my scheduled appointment time before being called into the operatory. Front desk seemed rushed.",
-        dashboardShieldUrl: "https://seospace-kappa.vercel.app/dashboard/shield",
+        dashboardShieldUrl: `${process.env.NEXT_PUBLIC_APP_URL || "https://trustpulse-ai-phi.vercel.app"}/dashboard/shield`,
       });
     } else if (type === "customer_apology") {
       subject = `A Personal Note from the Director of ${businessName}`;
@@ -72,8 +95,6 @@ export async function POST(request: Request) {
       html,
       fromName: `TrustPulse AI — ${businessName}`,
     });
-
-    const config = getGoogleSmtpConfig();
 
     return NextResponse.json({
       success: result.success,

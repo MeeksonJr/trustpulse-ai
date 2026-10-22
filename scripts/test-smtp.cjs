@@ -1,8 +1,14 @@
 const nodemailer = require("nodemailer");
 
 async function testSmtp() {
+  require("dotenv").config({ path: ".env.local" });
   const user = process.env.GOOGLE_SMTP_USER || "d.mohamed1504@gmail.com";
-  const pass = (process.env.GOOGLE_SMTP_APP_PASSWORD || "bmjvlsqzuraymwj").replace(/\s+/g, "");
+  const pass = (process.env.GOOGLE_SMTP_APP_PASSWORD || "").replace(/\s+/g, "");
+
+  if (!pass) {
+    console.error("❌ Error: GOOGLE_SMTP_APP_PASSWORD not set in environment or .env.local");
+    return;
+  }
 
   console.log("Testing SMTP connection with account:", user);
   const transporter = nodemailer.createTransport({

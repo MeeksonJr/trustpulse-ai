@@ -91,7 +91,7 @@ export async function POST(request: Request) {
         customerEmail,
         customerPhone: customerPhone || undefined,
         grievanceText,
-        dashboardShieldUrl: "https://seospace-kappa.vercel.app/dashboard/shield",
+        dashboardShieldUrl: `${process.env.NEXT_PUBLIC_APP_URL || "https://trustpulse-ai-phi.vercel.app"}/dashboard/shield`,
       });
 
       const alertResult = await sendEmailWithGoogleSmtp({

@@ -24,9 +24,11 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { TrustPulseStore } from "@/lib/storage/trustpulse-store";
+import { getWorkspaceUser, WorkspaceUser } from "@/lib/storage/workspace-store";
 import { PrivateFeedback, FeedbackStatus, Workspace } from "@/types/trustpulse";
 
 export default function ShieldInboxPage() {
+  const [currentUser, setCurrentUser] = useState<WorkspaceUser | null>(null);
   const [workspaces, setWorkspaces] = useState<Workspace[]>(() => TrustPulseStore.getWorkspaces());
   const [selectedWsId, setSelectedWsId] = useState<string>(() => {
     if (typeof window !== "undefined") {
@@ -48,12 +50,25 @@ export default function ShieldInboxPage() {
   const [simulating, setSimulating] = useState(false);
 
   useEffect(() => {
-    const wsList = TrustPulseStore.getWorkspaces();
+    const user = getWorkspaceUser();
+    setCurrentUser(user);
+    const wsList = TrustPulseStore.getWorkspaces(user?.id);
     setWorkspaces(wsList);
     const stored = localStorage.getItem("tp_active_workspace");
     if (stored && wsList.some((w) => w.id === stored)) {
       setSelectedWsId(stored);
+    } else if (wsList[0]) {
+      setSelectedWsId(wsList[0].id);
     }
+
+    fetch(`/api/workspaces?userId=${encodeURIComponent(user?.id || "demo")}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.workspaces) && data.workspaces.length > 0) {
+          setWorkspaces(data.workspaces);
+        }
+      })
+      .catch(() => {});
 
     const handleWsChange = (e: Event) => {
       const customEvent = e as CustomEvent<string>;
