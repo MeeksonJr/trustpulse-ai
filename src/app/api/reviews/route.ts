@@ -5,7 +5,42 @@ import { getServerSupabaseAdmin } from "@/lib/supabase/client";
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const workspaceId = searchParams.get("workspaceId") || undefined;
-  const reviews = TrustPulseStore.getReviews(workspaceId);
+  let reviews = TrustPulseStore.getReviews(workspaceId);
+
+  // Fallback: If no reviews in local memory, load from Supabase database
+  if (reviews.length === 0 && workspaceId) {
+    try {
+      const supabase = getServerSupabaseAdmin();
+      if (supabase) {
+        const { data: supaReviews } = await supabase
+          .from("trustpulse_reviews")
+          .select("*")
+          .eq("workspace_id", workspaceId)
+          .order("rating", { ascending: false });
+
+        if (supaReviews && supaReviews.length > 0) {
+          reviews = supaReviews.map((r) => ({
+            id: r.id,
+            workspaceId: r.workspace_id,
+            authorName: r.author_name,
+            authorAvatar: r.author_avatar || undefined,
+            authorRole: r.author_role || "Customer",
+            authorLocation: r.author_location || "",
+            rating: r.rating,
+            reviewText: r.review_text,
+            platform: r.platform,
+            sentiment: r.sentiment,
+            reviewDate: r.review_date,
+            isVerified: r.is_verified,
+            isFeatured: r.is_featured,
+          }));
+        }
+      }
+    } catch (dbErr) {
+      console.warn("[TrustPulse] Supabase reviews fetch notice:", dbErr);
+    }
+  }
+
   return NextResponse.json({ success: true, reviews });
 }
 

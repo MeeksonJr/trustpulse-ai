@@ -10,7 +10,8 @@ export interface PricingPlan {
   annualPriceId: string;
   monthlyPaymentLink: string;
   annualPaymentLink: string;
-  auditsPerMonth: string;
+  locationsOrWorkspaces?: string;
+  auditsPerMonth?: string;
   highlighted?: boolean;
   features: string[];
 }
@@ -19,7 +20,7 @@ export const PRICING_PLANS: PricingPlan[] = [
   {
     id: "starter",
     name: "Starter",
-    tagline: "Best for solo founders testing their own landing pages.",
+    tagline: "Essential review funnel & social proof toasts for a single location or store.",
     monthlyPrice: 0,
     annualPricePerMonth: 0,
     annualTotal: 0,
@@ -27,20 +28,23 @@ export const PRICING_PLANS: PricingPlan[] = [
     annualPriceId: "",
     monthlyPaymentLink: "/signup?plan=starter",
     annualPaymentLink: "/signup?plan=starter",
-    auditsPerMonth: "3 Audits / month",
+    locationsOrWorkspaces: "1 Location",
+    auditsPerMonth: "1 Location Workspace",
     features: [
-      "3 full 5-pillar URL audits per month",
-      "Technical SEO & On-Page DOM analysis",
-      "WCAG 2.2 accessibility & security check",
-      "Shareable public report URL",
-      "Standard Seospace community support",
+      "1 Active Business Location",
+      "Smart QR Star Gatekeeper (/r/[slug])",
+      "Negative Review Shield (1-3★ routing)",
+      "Up to 25 Verified Customer Reviews",
+      "Floating Toast & Badge Social Proof Widgets",
+      "Manual AI Reply Drafts (10/mo)",
+      "Standard Email Notifications",
     ],
   },
   {
     id: "pro",
     name: "Professional",
     badge: "Most Popular",
-    tagline: "Best for growing businesses, marketers & SEO consultants.",
+    tagline: "Full Google Maps sync, unlimited reviews, and automated PulseMind™ AI replies.",
     monthlyPrice: 29,
     annualPricePerMonth: 23,
     annualTotal: 276,
@@ -56,23 +60,25 @@ export const PRICING_PLANS: PricingPlan[] = [
     annualPaymentLink:
       process.env.NEXT_PUBLIC_STRIPE_PRO_ANNUAL_LINK ||
       "https://buy.stripe.com/7sYdR96XS2tF2QF2T79k401",
-    auditsPerMonth: "100 Audits / month",
+    locationsOrWorkspaces: "3 Locations",
+    auditsPerMonth: "3 Location Workspaces",
     highlighted: true,
     features: [
-      "100 deep AI website audits per month",
-      "AI Copywriting & Hero CRO Rewrite Engine",
-      "Real-time AI Content & SEO Score Editor",
-      "AI Search (GEO) & LLMs.txt readiness scan",
-      "1-Click Print & PDF Report Export",
-      "100 keyword opportunity reports per month",
-      "Priority email & chat support",
+      "3 Active Business Locations",
+      "Unlimited 5-Star Reviews & Funnels",
+      "Live Google Maps Intelligence & Auto-Sync",
+      "PulseMind™ AI Auto-Responder (Unlimited)",
+      "Printable QR Stand Studio (Print Ready PDF)",
+      "Private Grievance Inbox with Resolution Log",
+      "All Embed Widgets (Wall of Love, Toasts, Badges)",
+      "Priority Email & Live Chat Support",
     ],
   },
   {
     id: "agency",
     name: "Agency White-Label",
     badge: "Unlimited + CRM",
-    tagline: "For agencies closing high-ticket retainers with branded audits.",
+    tagline: "Turnkey agency engine to manage unlimited clients with custom branding & domains.",
     monthlyPrice: 79,
     annualPricePerMonth: 63,
     annualTotal: 756,
@@ -88,15 +94,16 @@ export const PRICING_PLANS: PricingPlan[] = [
     annualPaymentLink:
       process.env.NEXT_PUBLIC_STRIPE_AGENCY_ANNUAL_LINK ||
       "https://buy.stripe.com/aFafZh81Wb0bezn1P39k403",
-    auditsPerMonth: "Unlimited Audits",
+    locationsOrWorkspaces: "Unlimited Workspaces",
+    auditsPerMonth: "Unlimited Workspaces",
     features: [
-      "Unlimited AI SEO, CRO & Compliance audits",
-      "100% White-Label PDF Reports (Your Logo & Brand)",
-      "Custom 'Book Strategy Call' CTA on every report",
-      "Embeddable Lead-Capture Audit Widget for your site",
-      "Built-in Client Lead CRM & CSV export",
-      "Multi-domain competitor watchlist & alerts",
-      "Dedicated agency onboarding & priority API queue",
+      "Unlimited Client Workspaces",
+      "100% White-Label: Your Domain, Logo & Brand",
+      "Instant Client Google Maps Onboarding (2s)",
+      "Client-Facing Login Portals & PDF Reports",
+      "Priority CDN Edge Embed SLA (99.9%)",
+      "Direct Google SMTP Notification Relays",
+      "Dedicated Agency Strategy & Onboarding",
     ],
   },
 ];

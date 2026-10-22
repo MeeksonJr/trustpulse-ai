@@ -9,7 +9,40 @@ export async function GET(req: NextRequest) {
     const id = req.nextUrl.searchParams.get("id");
 
     if (slug) {
-      const ws = TrustPulseStore.getWorkspaceBySlug(slug);
+      let ws: Workspace | undefined = TrustPulseStore.getWorkspaceBySlug(slug);
+      if (!ws) {
+        try {
+          const supabase = getServerSupabaseAdmin();
+          if (supabase) {
+            const { data } = await supabase
+              .from("trustpulse_workspaces")
+              .select("*")
+              .eq("slug", slug)
+              .maybeSingle();
+
+            if (data) {
+              ws = {
+                id: data.id,
+                name: data.name,
+                slug: data.slug,
+                category: data.category,
+                brandColor: data.brand_color,
+                googlePlaceId: data.google_place_id,
+                googleReviewUrl: data.google_review_url,
+                trustpilotUrl: data.trustpilot_url,
+                starThreshold: data.star_threshold,
+                customHeadline: data.custom_headline,
+                customSubheadline: data.custom_subheadline,
+                stats: data.stats,
+                createdAt: data.created_at,
+              };
+            }
+          }
+        } catch (e) {
+          console.warn("[TrustPulse] Supabase slug lookup notice:", e);
+        }
+      }
+
       if (!ws) {
         return NextResponse.json(
           { success: false, error: "Workspace not found" },
@@ -20,7 +53,40 @@ export async function GET(req: NextRequest) {
     }
 
     if (id) {
-      const ws = TrustPulseStore.getWorkspaceById(id);
+      let ws: Workspace | undefined = TrustPulseStore.getWorkspaceById(id);
+      if (!ws) {
+        try {
+          const supabase = getServerSupabaseAdmin();
+          if (supabase) {
+            const { data } = await supabase
+              .from("trustpulse_workspaces")
+              .select("*")
+              .eq("id", id)
+              .maybeSingle();
+
+            if (data) {
+              ws = {
+                id: data.id,
+                name: data.name,
+                slug: data.slug,
+                category: data.category,
+                brandColor: data.brand_color,
+                googlePlaceId: data.google_place_id,
+                googleReviewUrl: data.google_review_url,
+                trustpilotUrl: data.trustpilot_url,
+                starThreshold: data.star_threshold,
+                customHeadline: data.custom_headline,
+                customSubheadline: data.custom_subheadline,
+                stats: data.stats,
+                createdAt: data.created_at,
+              };
+            }
+          }
+        } catch (e) {
+          console.warn("[TrustPulse] Supabase id lookup notice:", e);
+        }
+      }
+
       if (!ws) {
         return NextResponse.json(
           { success: false, error: "Workspace not found" },
@@ -31,6 +97,42 @@ export async function GET(req: NextRequest) {
     }
 
     const workspaces = TrustPulseStore.getWorkspaces();
+    try {
+      const supabase = getServerSupabaseAdmin();
+      if (supabase) {
+        const { data } = await supabase
+          .from("trustpulse_workspaces")
+          .select("*")
+          .order("created_at", { ascending: false });
+
+        if (data && data.length > 0) {
+          const seen = new Set(workspaces.map((w) => w.id));
+          for (const row of data) {
+            if (!seen.has(row.id)) {
+              workspaces.push({
+                id: row.id,
+                name: row.name,
+                slug: row.slug,
+                category: row.category,
+                brandColor: row.brand_color,
+                googlePlaceId: row.google_place_id,
+                googleReviewUrl: row.google_review_url,
+                trustpilotUrl: row.trustpilot_url,
+                starThreshold: row.star_threshold,
+                customHeadline: row.custom_headline,
+                customSubheadline: row.custom_subheadline,
+                stats: row.stats,
+                createdAt: row.created_at,
+              });
+              seen.add(row.id);
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("[TrustPulse] Supabase workspaces list notice:", e);
+    }
+
     return NextResponse.json({ success: true, workspaces });
   } catch (err: unknown) {
     const errorMsg = err instanceof Error ? err.message : "Failed to retrieve workspaces";
