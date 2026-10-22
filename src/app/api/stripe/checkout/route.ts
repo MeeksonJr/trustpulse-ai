@@ -34,6 +34,12 @@ export async function POST(req: NextRequest) {
         customer_email: email || undefined,
         line_items: [{ price: priceId, quantity: 1 }],
         allow_promotion_codes: true,
+        client_reference_id: email || undefined,
+        metadata: {
+          planId: selectedPlan.id,
+          billingCycle,
+          email: email || "",
+        },
         success_url: `${appUrl}/dashboard?upgraded=${selectedPlan.id}`,
         cancel_url: `${appUrl}/#pricing`,
       });
