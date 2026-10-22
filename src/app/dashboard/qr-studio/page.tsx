@@ -17,14 +17,21 @@ import {
   Eye,
 } from "lucide-react";
 import { TrustPulseStore } from "@/lib/storage/trustpulse-store";
+import { Workspace } from "@/types/trustpulse";
 
 export default function QRStudioPage() {
-  const workspaces = TrustPulseStore.getWorkspaces();
-  const [selectedWsId, setSelectedWsId] = useState<string>("ws-apex-dental");
+  const [workspaces, setWorkspaces] = useState<Workspace[]>(() => TrustPulseStore.getWorkspaces());
+  const [selectedWsId, setSelectedWsId] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("tp_active_workspace");
+      if (stored) return stored;
+    }
+    return workspaces[0]?.id || "ws-apex-dental";
+  });
   const ws = workspaces.find((w) => w.id === selectedWsId) || workspaces[0];
 
-  const [heading, setHeading] = useState("How was your visit today?");
-  const [subheading, setSubheading] = useState("Scan with your phone camera to share feedback with our team");
+  const [heading, setHeading] = useState(ws?.customHeadline || "How was your visit today?");
+  const [subheading, setSubheading] = useState(ws?.customSubheadline || "Scan with your phone camera to share feedback with our team");
   const [color, setColor] = useState(ws?.brandColor || "#059669");
   const [includeStars, setIncludeStars] = useState(true);
   const [copiedLink, setCopiedLink] = useState(false);
@@ -34,7 +41,33 @@ export default function QRStudioPage() {
     if (typeof window !== "undefined") {
       setOrigin(window.location.origin);
     }
+    const wsList = TrustPulseStore.getWorkspaces();
+    setWorkspaces(wsList);
+    const stored = localStorage.getItem("tp_active_workspace");
+    if (stored && wsList.some((w) => w.id === stored)) {
+      setSelectedWsId(stored);
+    }
+
+    const handleWsChange = (e: Event) => {
+      const customEvent = e as CustomEvent<string>;
+      if (customEvent.detail) {
+        setSelectedWsId(customEvent.detail);
+      }
+    };
+
+    window.addEventListener("trustpulse_ws_changed", handleWsChange);
+    return () => {
+      window.removeEventListener("trustpulse_ws_changed", handleWsChange);
+    };
   }, []);
+
+  useEffect(() => {
+    if (ws) {
+      setColor(ws.brandColor || "#059669");
+      if (ws.customHeadline) setHeading(ws.customHeadline);
+      if (ws.customSubheadline) setSubheading(ws.customSubheadline);
+    }
+  }, [ws]);
 
   const funnelUrl = `${origin}/r/${ws?.slug || "apex-dental"}`;
 

@@ -132,9 +132,18 @@ export default function AgencyHubPage() {
       if (data.success && data.workspace) {
         TrustPulseStore.saveWorkspace(data.workspace);
         setWorkspaces([data.workspace, ...TrustPulseStore.getWorkspaces().filter((w) => w.id !== data.workspace.id)]);
+        if (typeof window !== "undefined") {
+          try {
+            localStorage.setItem("tp_active_workspace", data.workspace.id);
+            window.dispatchEvent(new CustomEvent("trustpulse_ws_changed", { detail: data.workspace.id }));
+            window.dispatchEvent(new CustomEvent("trustpulse_workspaces_updated"));
+          } catch {
+            //
+          }
+        }
         setCreatedSummary({
           workspace: data.workspace,
-          reviewCount: data.reviewCount || 4,
+          reviewCount: data.reviewCount || (data.workspace.stats?.totalReviews || 12),
           widgetsGenerated: data.widgetsGenerated || [],
           funnelUrl: data.funnelUrl || `/r/${data.workspace.slug}`,
         });
@@ -173,6 +182,15 @@ export default function AgencyHubPage() {
 
     TrustPulseStore.saveWorkspace(newWs);
     setWorkspaces([...TrustPulseStore.getWorkspaces()]);
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("tp_active_workspace", newWs.id);
+        window.dispatchEvent(new CustomEvent("trustpulse_ws_changed", { detail: newWs.id }));
+        window.dispatchEvent(new CustomEvent("trustpulse_workspaces_updated"));
+      } catch {
+        //
+      }
+    }
     setShowAddModal(false);
     setNewClientName("");
     setNewClientSlug("");

@@ -36,14 +36,20 @@ import { Workspace, ReviewItem, PrivateFeedback } from "@/types/trustpulse";
 import { GoogleBadge, TrustpilotBadge } from "@/components/ui/PlatformBadges";
 
 export default function DashboardPage() {
-  const workspaces = TrustPulseStore.getWorkspaces();
-  const [selectedWsId, setSelectedWsId] = useState<string>(workspaces[0]?.id || "ws-apex-dental");
+  const [workspaces, setWorkspaces] = useState<Workspace[]>(() => TrustPulseStore.getWorkspaces());
+  const [selectedWsId, setSelectedWsId] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("tp_active_workspace");
+      if (stored) return stored;
+    }
+    return workspaces[0]?.id || "ws-apex-dental";
+  });
   const currentWorkspace = workspaces.find((w) => w.id === selectedWsId) || workspaces[0];
 
-  const [reviewsList, setReviewsList] = useState<ReviewItem[]>(
+  const [reviewsList, setReviewsList] = useState<ReviewItem[]>(() =>
     TrustPulseStore.getReviews(currentWorkspace?.id)
   );
-  const [feedback, setFeedback] = useState<PrivateFeedback[]>(
+  const [feedback, setFeedback] = useState<PrivateFeedback[]>(() =>
     TrustPulseStore.getPrivateFeedback(currentWorkspace?.id)
   );
 
@@ -68,6 +74,36 @@ export default function DashboardPage() {
   >([]);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [copiedScript, setCopiedScript] = useState(false);
+
+  useEffect(() => {
+    // Initial sync
+    const wsList = TrustPulseStore.getWorkspaces();
+    setWorkspaces(wsList);
+    const stored = localStorage.getItem("tp_active_workspace");
+    if (stored && wsList.some((w) => w.id === stored)) {
+      setSelectedWsId(stored);
+    }
+
+    const handleWsChange = (e: Event) => {
+      const customEvent = e as CustomEvent<string>;
+      if (customEvent.detail) {
+        setSelectedWsId(customEvent.detail);
+      }
+    };
+
+    const handleWsListUpdate = () => {
+      const updated = TrustPulseStore.getWorkspaces();
+      setWorkspaces(updated);
+    };
+
+    window.addEventListener("trustpulse_ws_changed", handleWsChange);
+    window.addEventListener("trustpulse_workspaces_updated", handleWsListUpdate);
+
+    return () => {
+      window.removeEventListener("trustpulse_ws_changed", handleWsChange);
+      window.removeEventListener("trustpulse_workspaces_updated", handleWsListUpdate);
+    };
+  }, []);
 
   useEffect(() => {
     setReviewsList(TrustPulseStore.getReviews(currentWorkspace?.id));

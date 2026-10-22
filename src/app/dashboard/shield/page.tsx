@@ -24,15 +24,21 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { TrustPulseStore } from "@/lib/storage/trustpulse-store";
-import { PrivateFeedback, FeedbackStatus } from "@/types/trustpulse";
+import { PrivateFeedback, FeedbackStatus, Workspace } from "@/types/trustpulse";
 
 export default function ShieldInboxPage() {
-  const workspaces = TrustPulseStore.getWorkspaces();
-  const [selectedWsId, setSelectedWsId] = useState<string>("ws-apex-dental");
+  const [workspaces, setWorkspaces] = useState<Workspace[]>(() => TrustPulseStore.getWorkspaces());
+  const [selectedWsId, setSelectedWsId] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("tp_active_workspace");
+      if (stored) return stored;
+    }
+    return workspaces[0]?.id || "ws-apex-dental";
+  });
   const ws = workspaces.find((w) => w.id === selectedWsId) || workspaces[0];
 
-  const [feedbackList, setFeedbackList] = useState<PrivateFeedback[]>(
-    TrustPulseStore.getPrivateFeedback(ws.id)
+  const [feedbackList, setFeedbackList] = useState<PrivateFeedback[]>(() =>
+    TrustPulseStore.getPrivateFeedback(ws?.id)
   );
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState<"all" | "new" | "contacted" | "resolved">("all");
@@ -40,6 +46,33 @@ export default function ShieldInboxPage() {
   const [notesText, setNotesText] = useState("");
   const [savedSuccessId, setSavedSuccessId] = useState<string | null>(null);
   const [simulating, setSimulating] = useState(false);
+
+  useEffect(() => {
+    const wsList = TrustPulseStore.getWorkspaces();
+    setWorkspaces(wsList);
+    const stored = localStorage.getItem("tp_active_workspace");
+    if (stored && wsList.some((w) => w.id === stored)) {
+      setSelectedWsId(stored);
+    }
+
+    const handleWsChange = (e: Event) => {
+      const customEvent = e as CustomEvent<string>;
+      if (customEvent.detail) {
+        setSelectedWsId(customEvent.detail);
+      }
+    };
+
+    window.addEventListener("trustpulse_ws_changed", handleWsChange);
+    return () => {
+      window.removeEventListener("trustpulse_ws_changed", handleWsChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (ws?.id) {
+      setFeedbackList(TrustPulseStore.getPrivateFeedback(ws.id));
+    }
+  }, [selectedWsId, ws?.id]);
 
   // Email Test Modal State
   const [testEmailModalOpen, setTestEmailModalOpen] = useState(false);

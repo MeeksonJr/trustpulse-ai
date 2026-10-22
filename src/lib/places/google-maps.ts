@@ -403,6 +403,46 @@ interface RapidBusinessItem {
   keywords_mentioned_in_reviews?: Array<{ keyword: string; review_count: number }>;
 }
 
+export interface RapidReviewItem {
+  review_id?: string;
+  review_text?: string;
+  rating?: number;
+  review_datetime_utc?: string;
+  review_timestamp?: number;
+  review_time?: string;
+  review_link?: string;
+  author_id?: string;
+  author_link?: string;
+  author_name?: string;
+  author_photo_url?: string;
+  author_review_count?: number;
+  owner_response_text?: string | null;
+  author_is_local_guide?: boolean;
+  review_source?: string;
+}
+
+async function fetchRapidApiBusinessReviews(businessId: string, limit = 20): Promise<RapidReviewItem[]> {
+  if (!RAPIDAPI_KEY || !businessId) return [];
+  try {
+    const url = `https://${RAPIDAPI_HOST}/business-reviews-v2?business_id=${encodeURIComponent(businessId)}&limit=${limit}&sort_by=most_relevant`;
+    const res = await fetch(url, {
+      headers: {
+        "x-rapidapi-key": RAPIDAPI_KEY,
+        "x-rapidapi-host": RAPIDAPI_HOST,
+        "X-User-Agent": "desktop",
+      },
+    });
+    if (!res.ok) return [];
+    const json = await res.json();
+    if (json && json.status === "OK" && json.data && Array.isArray(json.data.reviews)) {
+      return json.data.reviews;
+    }
+  } catch (err) {
+    console.warn("[TrustPulse] RapidAPI business-reviews error:", err);
+  }
+  return [];
+}
+
 async function fetchRapidApiBusinessDetails(businessId: string): Promise<RapidBusinessItem | null> {
   if (!RAPIDAPI_KEY) return null;
   try {
@@ -447,7 +487,10 @@ async function fetchRapidApiSearch(query: string): Promise<RapidBusinessItem | n
   return null;
 }
 
-function convertRapidItemToResult(item: RapidBusinessItem): GooglePlaceResult {
+function convertRapidItemToResult(
+  item: RapidBusinessItem,
+  fetchedReviews: RapidReviewItem[] = []
+): GooglePlaceResult {
   const name = item.name || "Local Business";
   const slug = slugify(name);
   const address = item.address || item.full_address || "Main Street, Commercial District";
@@ -479,28 +522,61 @@ function convertRapidItemToResult(item: RapidBusinessItem): GooglePlaceResult {
 
   const locationContext = [item.city, item.state].filter(Boolean).join(", ") || address;
 
-  const initialReviews = matchedSector.reviewTemplates.map((text, idx) => {
-    let reviewSnippet = text;
-    if (idx === 0 && keywords.length >= 2) {
-      reviewSnippet = `Outstanding experience at ${name}! Loved the ${keywords[0]} and ${keywords[1]}. Highly recommended!`;
-    } else if (idx === 1 && summary) {
-      reviewSnippet = `${summary} Courteous staff and wonderful atmosphere.`;
-    }
+  let initialReviews: GooglePlaceResult["initialReviews"] = [];
 
-    return {
-      id: `rev-rapid-${slug}-${idx + 1}`,
-      authorName: SAMPLE_AUTHORS[idx % SAMPLE_AUTHORS.length],
-      authorAvatar: SAMPLE_AVATARS[idx % SAMPLE_AVATARS.length],
-      authorRole: "Verified Customer",
-      authorLocation: locationContext,
-      rating: 5,
-      reviewText: reviewSnippet,
-      platform: "google" as const,
-      reviewDate: new Date(Date.now() - (idx + 1) * 86400000 * 3).toISOString(),
-      isVerified: true,
-      isFeatured: true,
-    };
-  });
+  if (Array.isArray(fetchedReviews) && fetchedReviews.length > 0) {
+    initialReviews = fetchedReviews.map((r, idx) => {
+      const author = r.author_name || SAMPLE_AUTHORS[idx % SAMPLE_AUTHORS.length];
+      const avatar = r.author_photo_url || SAMPLE_AVATARS[idx % SAMPLE_AVATARS.length];
+      const revRating = typeof r.rating === "number" ? r.rating : 5;
+      const text =
+        r.review_text && r.review_text.trim().length > 0
+          ? r.review_text.trim()
+          : `Outstanding experience with ${name}. Highly recommended!`;
+      const date =
+        r.review_datetime_utc ||
+        new Date(Date.now() - (idx + 1) * 86400000 * 3).toISOString();
+      const role = r.author_is_local_guide ? "Google Local Guide" : "Verified Customer";
+
+      return {
+        id: `rev-google-${slug}-${r.review_id ? r.review_id.slice(0, 16) : idx + 1}`,
+        authorName: author,
+        authorAvatar: avatar,
+        authorRole: role,
+        authorLocation: locationContext,
+        rating: revRating,
+        reviewText: text,
+        platform: "google" as const,
+        reviewDate: date,
+        isVerified: true,
+        isFeatured: revRating >= 4,
+      };
+    });
+  } else {
+    // Sector templates fallback only if no reviews exist
+    initialReviews = matchedSector.reviewTemplates.map((text, idx) => {
+      let reviewSnippet = text;
+      if (idx === 0 && keywords.length >= 2) {
+        reviewSnippet = `Outstanding experience at ${name}! Loved the ${keywords[0]} and ${keywords[1]}. Highly recommended!`;
+      } else if (idx === 1 && summary) {
+        reviewSnippet = `${summary} Courteous staff and wonderful atmosphere.`;
+      }
+
+      return {
+        id: `rev-rapid-${slug}-${idx + 1}`,
+        authorName: SAMPLE_AUTHORS[idx % SAMPLE_AUTHORS.length],
+        authorAvatar: SAMPLE_AVATARS[idx % SAMPLE_AVATARS.length],
+        authorRole: "Verified Customer",
+        authorLocation: locationContext,
+        rating: 5,
+        reviewText: reviewSnippet,
+        platform: "google" as const,
+        reviewDate: new Date(Date.now() - (idx + 1) * 86400000 * 3).toISOString(),
+        isVerified: true,
+        isFeatured: true,
+      };
+    });
+  }
 
   const googleReviewUrl =
     item.reviews_link ||
@@ -585,7 +661,8 @@ export async function lookupGoogleBusiness(
       if (businessId) {
         const rapidDetails = await fetchRapidApiBusinessDetails(businessId);
         if (rapidDetails) {
-          return convertRapidItemToResult(rapidDetails);
+          const revs = await fetchRapidApiBusinessReviews(rapidDetails.business_id || businessId, 20);
+          return convertRapidItemToResult(rapidDetails, revs);
         }
       }
 
@@ -636,7 +713,10 @@ export async function lookupGoogleBusiness(
         const queryTerm = [detectedName, detectedAddress].filter(Boolean).join(" ");
         const rapidSearch = await fetchRapidApiSearch(queryTerm);
         if (rapidSearch) {
-          return convertRapidItemToResult(rapidSearch);
+          const revs = rapidSearch.business_id
+            ? await fetchRapidApiBusinessReviews(rapidSearch.business_id, 20)
+            : [];
+          return convertRapidItemToResult(rapidSearch, revs);
         }
       }
     } catch {
@@ -646,7 +726,10 @@ export async function lookupGoogleBusiness(
     // 1. Try RapidAPI Search first for exact live Google data
     const rapidSearch = await fetchRapidApiSearch(cleanInput);
     if (rapidSearch) {
-      return convertRapidItemToResult(rapidSearch);
+      const revs = rapidSearch.business_id
+        ? await fetchRapidApiBusinessReviews(rapidSearch.business_id, 20)
+        : [];
+      return convertRapidItemToResult(rapidSearch, revs);
     }
 
     // 2. Free text search fallback — First query Nominatim for exact place & address

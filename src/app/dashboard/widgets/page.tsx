@@ -20,12 +20,18 @@ import {
   BadgeCheck,
 } from "lucide-react";
 import { TrustPulseStore } from "@/lib/storage/trustpulse-store";
-import { WidgetType, WidgetTheme } from "@/types/trustpulse";
+import { WidgetType, WidgetTheme, Workspace } from "@/types/trustpulse";
 import { GoogleBadge, TrustpilotBadge } from "@/components/ui/PlatformBadges";
 
 export default function WidgetStudioPage() {
-  const workspaces = TrustPulseStore.getWorkspaces();
-  const [selectedWsId, setSelectedWsId] = useState<string>("ws-apex-dental");
+  const [workspaces, setWorkspaces] = useState<Workspace[]>(() => TrustPulseStore.getWorkspaces());
+  const [selectedWsId, setSelectedWsId] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("tp_active_workspace");
+      if (stored) return stored;
+    }
+    return workspaces[0]?.id || "ws-apex-dental";
+  });
   const ws = workspaces.find((w) => w.id === selectedWsId) || workspaces[0];
 
   const [widgetType, setWidgetType] = useState<WidgetType>("toast_notification");
@@ -42,6 +48,24 @@ export default function WidgetStudioPage() {
     if (typeof window !== "undefined") {
       setOrigin(window.location.origin);
     }
+    const wsList = TrustPulseStore.getWorkspaces();
+    setWorkspaces(wsList);
+    const stored = localStorage.getItem("tp_active_workspace");
+    if (stored && wsList.some((w) => w.id === stored)) {
+      setSelectedWsId(stored);
+    }
+
+    const handleWsChange = (e: Event) => {
+      const customEvent = e as CustomEvent<string>;
+      if (customEvent.detail) {
+        setSelectedWsId(customEvent.detail);
+      }
+    };
+
+    window.addEventListener("trustpulse_ws_changed", handleWsChange);
+    return () => {
+      window.removeEventListener("trustpulse_ws_changed", handleWsChange);
+    };
   }, []);
 
   const sampleReviews = TrustPulseStore.getReviews(ws?.id).filter((r) => r.rating >= minRating);

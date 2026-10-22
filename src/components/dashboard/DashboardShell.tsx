@@ -69,16 +69,55 @@ export function DashboardShell({ children }: DashboardShellProps) {
       setIsDark(isDarkMode);
     }
 
-    // Load workspaces & feedback
+    // Load workspaces & sync active selection
     const wsList = TrustPulseStore.getWorkspaces();
     setWorkspaces(wsList);
-    if (wsList.length > 0) {
-      setSelectedWsId(wsList[0].id);
-      const grievances = TrustPulseStore.getPrivateFeedback(wsList[0].id);
-      const newCount = grievances.filter((g) => g.status === "new").length;
-      setUnreadGrievanceCount(newCount > 0 ? newCount : 1);
+    let activeId = wsList[0]?.id || "ws-apex-dental";
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("tp_active_workspace");
+      if (stored && wsList.some((w) => w.id === stored)) {
+        activeId = stored;
+      }
     }
+    setSelectedWsId(activeId);
+
+    const grievances = TrustPulseStore.getPrivateFeedback(activeId);
+    const newCount = grievances.filter((g) => g.status === "new").length;
+    setUnreadGrievanceCount(newCount > 0 ? newCount : 1);
+
+    // Listen for cross-component workspace events
+    const handleWsChange = (e: Event) => {
+      const customEvent = e as CustomEvent<string>;
+      if (customEvent.detail) {
+        setSelectedWsId(customEvent.detail);
+      }
+    };
+    const handleWsListUpdate = () => {
+      const updated = TrustPulseStore.getWorkspaces();
+      setWorkspaces(updated);
+    };
+
+    window.addEventListener("trustpulse_ws_changed", handleWsChange);
+    window.addEventListener("trustpulse_workspaces_updated", handleWsListUpdate);
+
+    return () => {
+      window.removeEventListener("trustpulse_ws_changed", handleWsChange);
+      window.removeEventListener("trustpulse_workspaces_updated", handleWsListUpdate);
+    };
   }, []);
+
+  const handleSelectWorkspace = (wsId: string) => {
+    setSelectedWsId(wsId);
+    setShowWorkspaceMenu(false);
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("tp_active_workspace", wsId);
+        window.dispatchEvent(new CustomEvent("trustpulse_ws_changed", { detail: wsId }));
+      } catch {
+        //
+      }
+    }
+  };
 
   const toggleTheme = () => {
     const nextDark = !isDark;
@@ -175,7 +214,7 @@ export function DashboardShell({ children }: DashboardShellProps) {
   };
 
   const sidebarContent = (
-    <div className="flex flex-col h-full bg-card border-r border-line select-none">
+    <div className="flex flex-col h-full bg-card select-none">
       {/* Brand & Version Header */}
       <div className="p-5 border-b border-line flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2.5">
@@ -238,10 +277,7 @@ export function DashboardShell({ children }: DashboardShellProps) {
                 <button
                   key={w.id}
                   type="button"
-                  onClick={() => {
-                    setSelectedWsId(w.id);
-                    setShowWorkspaceMenu(false);
-                  }}
+                  onClick={() => handleSelectWorkspace(w.id)}
                   className={`w-full flex items-center gap-2 p-2 rounded-xl text-left text-xs transition-colors cursor-pointer ${
                     w.id === currentWorkspace.id
                       ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold"
@@ -388,9 +424,9 @@ export function DashboardShell({ children }: DashboardShellProps) {
   );
 
   return (
-    <div className="min-h-screen bg-stage text-ink font-sans flex antialiased">
-      {/* DESKTOP SIDEBAR (Constant 260px) */}
-      <aside className="hidden lg:block w-64 h-screen sticky top-0 shrink-0 z-30">
+    <div className="h-screen w-screen overflow-hidden flex bg-stage text-ink font-sans antialiased">
+      {/* DESKTOP SIDEBAR (Strictly Pinned / Constant 260px) */}
+      <aside className="hidden lg:flex flex-col w-64 h-full shrink-0 z-30 border-r border-line bg-card">
         {sidebarContent}
       </aside>
 
@@ -407,10 +443,10 @@ export function DashboardShell({ children }: DashboardShellProps) {
         </div>
       )}
 
-      {/* MAIN APPLICATION CONTAINER */}
-      <div className="flex-1 flex flex-col min-w-0 min-h-screen overflow-x-hidden">
-        {/* Top App Header */}
-        <header className="sticky top-0 z-20 h-16 bg-card/90 backdrop-blur-md border-b border-line px-4 sm:px-8 flex items-center justify-between gap-4">
+      {/* MAIN APPLICATION CONTAINER (Right side with independent scroll) */}
+      <div className="flex-1 h-full flex flex-col min-w-0 overflow-hidden">
+        {/* Top App Header (Pinned at top of content area) */}
+        <header className="h-16 shrink-0 bg-card/90 backdrop-blur-md border-b border-line px-4 sm:px-8 flex items-center justify-between gap-4 z-20">
           <div className="flex items-center gap-3">
             <button
               type="button"
@@ -471,7 +507,7 @@ export function DashboardShell({ children }: DashboardShellProps) {
               className="hidden sm:flex p-2 rounded-xl text-mute hover:text-ink hover:bg-stage border border-line transition-colors cursor-pointer"
               title="Toggle Day/Night Mode"
             >
-              {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              {isDark ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
             </button>
 
             {/* Active Workspace Pill */}
@@ -489,9 +525,11 @@ export function DashboardShell({ children }: DashboardShellProps) {
           </div>
         </header>
 
-        {/* Page Content Body */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
-          {children}
+        {/* Page Content Body (Independent Scroll Pane) */}
+        <main className="flex-1 h-full overflow-y-auto p-4 sm:p-6 lg:p-8">
+          <div className="max-w-7xl w-full mx-auto pb-12">
+            {children}
+          </div>
         </main>
       </div>
     </div>

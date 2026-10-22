@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Bot,
@@ -16,19 +16,53 @@ import {
   Sliders,
 } from "lucide-react";
 import { TrustPulseStore } from "@/lib/storage/trustpulse-store";
-import { ReviewItem, AIReplyOption } from "@/types/trustpulse";
+import { ReviewItem, AIReplyOption, Workspace } from "@/types/trustpulse";
 import { GoogleBadge, TrustpilotBadge } from "@/components/ui/PlatformBadges";
 
 export default function AIReplyStudioPage() {
-  const workspaces = TrustPulseStore.getWorkspaces();
-  const [selectedWsId, setSelectedWsId] = useState<string>("ws-apex-dental");
+  const [workspaces, setWorkspaces] = useState<Workspace[]>(() => TrustPulseStore.getWorkspaces());
+  const [selectedWsId, setSelectedWsId] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("tp_active_workspace");
+      if (stored) return stored;
+    }
+    return workspaces[0]?.id || "ws-apex-dental";
+  });
   const ws = workspaces.find((w) => w.id === selectedWsId) || workspaces[0];
 
-  const reviews = TrustPulseStore.getReviews(ws?.id);
-  const [selectedReview, setSelectedReview] = useState<ReviewItem | null>(reviews[0] || null);
+  const [reviews, setReviews] = useState<ReviewItem[]>(() => TrustPulseStore.getReviews(ws?.id));
+  const [selectedReview, setSelectedReview] = useState<ReviewItem | null>(() => reviews[0] || null);
   const [loadingAI, setLoadingAI] = useState(false);
   const [options, setOptions] = useState<AIReplyOption[]>([]);
   const [copiedType, setCopiedType] = useState<string | null>(null);
+
+  useEffect(() => {
+    const wsList = TrustPulseStore.getWorkspaces();
+    setWorkspaces(wsList);
+    const stored = localStorage.getItem("tp_active_workspace");
+    if (stored && wsList.some((w) => w.id === stored)) {
+      setSelectedWsId(stored);
+    }
+
+    const handleWsChange = (e: Event) => {
+      const customEvent = e as CustomEvent<string>;
+      if (customEvent.detail) {
+        setSelectedWsId(customEvent.detail);
+      }
+    };
+
+    window.addEventListener("trustpulse_ws_changed", handleWsChange);
+    return () => {
+      window.removeEventListener("trustpulse_ws_changed", handleWsChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    const list = TrustPulseStore.getReviews(ws?.id);
+    setReviews(list);
+    setSelectedReview(list[0] || null);
+    setOptions([]);
+  }, [selectedWsId, ws?.id]);
 
   const generateReplies = async (review: ReviewItem) => {
     setSelectedReview(review);
