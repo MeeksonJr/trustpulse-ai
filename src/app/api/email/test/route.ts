@@ -22,15 +22,19 @@ export async function POST(request: Request) {
     }
 
     const config = getGoogleSmtpConfig();
-    const authorizedRecipients = [
-      (config?.user || "").toLowerCase().trim(),
-      (process.env.ADMIN_ALERT_EMAIL || "").toLowerCase().trim(),
-    ].filter(Boolean);
+    const authorizedRecipients = Array.from(
+      new Set(
+        [
+          (config?.user || "").toLowerCase().trim(),
+          (process.env.ADMIN_ALERT_EMAIL || "").toLowerCase().trim(),
+          "d.mohamed1504@gmail.com",
+        ].filter(Boolean)
+      )
+    );
 
     const cleanTo = to.trim().toLowerCase();
     const adminKey = request.headers.get("x-admin-key");
     const isAuthorized =
-      authorizedRecipients.length === 0 ||
       authorizedRecipients.includes(cleanTo) ||
       (process.env.ADMIN_SECRET_KEY && adminKey === process.env.ADMIN_SECRET_KEY);
 
@@ -38,7 +42,7 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           success: false,
-          error: `Test email dispatch is restricted to verified administrators (${authorizedRecipients[0]}).`,
+          error: `Test email dispatch is restricted to verified administrators (${authorizedRecipients.join(", ")}).`,
         },
         { status: 403 }
       );
