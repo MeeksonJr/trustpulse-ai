@@ -5,24 +5,27 @@ import Link from "next/link";
 import {
   Bot,
   Sparkles,
-  ArrowLeft,
   Copy,
   Check,
   Star,
   CheckCircle2,
   RefreshCw,
+  ExternalLink,
+  MessageSquare,
+  Search,
+  Sliders,
 } from "lucide-react";
 import { TrustPulseStore } from "@/lib/storage/trustpulse-store";
 import { ReviewItem, AIReplyOption } from "@/types/trustpulse";
+import { GoogleBadge, TrustpilotBadge } from "@/components/ui/PlatformBadges";
 
 export default function AIReplyStudioPage() {
   const workspaces = TrustPulseStore.getWorkspaces();
   const [selectedWsId, setSelectedWsId] = useState<string>("ws-apex-dental");
   const ws = workspaces.find((w) => w.id === selectedWsId) || workspaces[0];
 
-  const reviews = TrustPulseStore.getReviews(ws.id);
+  const reviews = TrustPulseStore.getReviews(ws?.id);
   const [selectedReview, setSelectedReview] = useState<ReviewItem | null>(reviews[0] || null);
-
   const [loadingAI, setLoadingAI] = useState(false);
   const [options, setOptions] = useState<AIReplyOption[]>([]);
   const [copiedType, setCopiedType] = useState<string | null>(null);
@@ -37,7 +40,7 @@ export default function AIReplyStudioPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           reviewId: review.id,
-          workspaceId: ws.id,
+          workspaceId: ws?.id,
         }),
       });
       const data = await res.json();
@@ -58,90 +61,78 @@ export default function AIReplyStudioPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
-      {/* Header */}
-      <header className="bg-white border-b border-slate-200 px-4 sm:px-8 py-3.5 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Link
-            href="/dashboard"
-            className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </Link>
-          <div>
-            <h1 className="font-bold text-base text-slate-900 flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-emerald-600" />
-              <span>PulseMind™ AI Review Responder</span>
-              <span className="text-[10px] font-mono font-semibold uppercase px-2 py-0.5 rounded bg-emerald-50 text-emerald-700">
-                SEO &amp; Sentiment
-              </span>
-            </h1>
-            <p className="text-xs text-slate-500">
-              Generate 3 strategic reply angles (SEO Local, Empathy, Loyalty) for any customer review
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <select
-            value={selectedWsId}
-            onChange={(e) => {
-              setSelectedWsId(e.target.value);
-              const targetReviews = TrustPulseStore.getReviews(e.target.value);
-              setSelectedReview(targetReviews[0] || null);
-              setOptions([]);
-            }}
-            className="text-xs font-semibold bg-slate-100 border border-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none text-slate-800"
-          >
-            {workspaces.map((w) => (
-              <option key={w.id} value={w.id}>
-                {w.name}
-              </option>
-            ))}
-          </select>
-        </div>
-      </header>
-
-      {/* Main Studio Grid */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-8 py-8 grid lg:grid-cols-12 gap-8 items-start">
-        {/* Left Column: Review Selector List (5 cols) */}
-        <div className="lg:col-span-5 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-          <div className="p-4 border-b border-slate-200 flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
-              Select Incoming Review ({reviews.length})
+    <div className="space-y-8 animate-in fade-in duration-200">
+      {/* Top Banner */}
+      <div className="bg-card border border-line rounded-3xl p-6 sm:p-7 sp-card-shadow flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+              PulseMind™ Neural Engine
             </span>
           </div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-ink tracking-tight flex items-center gap-2">
+            <span>AI Review Auto-Responder</span>
+          </h1>
+          <p className="text-xs sm:text-sm text-mute">
+            Synthesizes 3 strategic response angles with local Google Maps keyword insertion.
+          </p>
+        </div>
 
-          <div className="divide-y divide-slate-100 max-h-[640px] overflow-y-auto">
+        <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            onClick={() => selectedReview && generateReplies(selectedReview)}
+            disabled={loadingAI || !selectedReview}
+            className="tp-btn-dark px-4 py-2.5 rounded-xl text-xs font-bold inline-flex items-center gap-2 cursor-pointer shadow-md disabled:opacity-50"
+          >
+            <Sparkles className="w-4 h-4 text-emerald-400" />
+            <span>Regenerate Angles</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Main Studio Grid: Review Queue (5 cols) + Response Generator (7 cols) */}
+      <div className="grid lg:grid-cols-12 gap-8 items-start">
+        {/* LEFT COLUMN: REVIEW SELECTOR */}
+        <div className="lg:col-span-5 bg-card rounded-3xl border border-line sp-card-shadow overflow-hidden">
+          <div className="p-5 border-b border-line flex items-center justify-between">
+            <h2 className="font-extrabold text-xs uppercase tracking-wider text-mute">
+              Incoming Reviews Queue ({reviews.length})
+            </h2>
+            <span className="text-[10px] font-mono text-mute">Click to synthesize</span>
+          </div>
+
+          <div className="divide-y divide-line max-h-[580px] overflow-y-auto">
             {reviews.map((r) => {
               const isSelected = selectedReview?.id === r.id;
               return (
                 <div
                   key={r.id}
                   onClick={() => generateReplies(r)}
-                  className={`p-4 cursor-pointer transition-colors ${
+                  className={`p-4 sm:p-5 cursor-pointer transition-all ${
                     isSelected
-                      ? "bg-emerald-50/60 border-l-4 border-emerald-600"
-                      : "hover:bg-slate-50"
+                      ? "bg-emerald-500/10 border-l-4 border-emerald-500"
+                      : "hover:bg-stage/60"
                   }`}
                 >
                   <div className="flex items-center justify-between mb-1.5">
-                    <span className="font-bold text-xs text-slate-900">
+                    <span className="font-extrabold text-xs text-ink">
                       {r.authorName}
                     </span>
-                    <div className="flex text-amber-400">
+                    <div className="flex text-amber-400 text-xs">
                       {Array.from({ length: r.rating }).map((_, i) => (
                         <Star key={i} className="w-3 h-3 fill-amber-400" />
                       ))}
                     </div>
                   </div>
-                  <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
+                  <p className="text-xs text-mute line-clamp-2 leading-relaxed">
                     &ldquo;{r.reviewText}&rdquo;
                   </p>
-                  <div className="mt-2 flex items-center justify-between text-[10px] text-slate-400">
-                    <span className="uppercase font-semibold">{r.platform}</span>
-                    <span className="text-emerald-700 font-semibold">
-                      {isSelected ? "Active Review" : "Click to Generate"}
+                  <div className="mt-2.5 flex items-center justify-between text-[10px]">
+                    <span className="uppercase font-bold text-mute">{r.platform}</span>
+                    <span className="text-emerald-600 dark:text-emerald-400 font-bold">
+                      {isSelected ? "Active Review" : "Tap to Generate AI →"}
                     </span>
                   </div>
                 </div>
@@ -150,100 +141,92 @@ export default function AIReplyStudioPage() {
           </div>
         </div>
 
-        {/* Right Column: AI Generation Canvas (7 cols) */}
+        {/* RIGHT COLUMN: GENERATED RESPONSES */}
         <div className="lg:col-span-7 space-y-6">
-          {selectedReview && (
-            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <div>
-                  <span className="text-[10px] font-mono uppercase text-slate-400">
-                    Target Review
-                  </span>
-                  <h3 className="font-bold text-sm text-slate-900">
-                    {selectedReview.authorName} ({selectedReview.authorRole || "Client"})
-                  </h3>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => generateReplies(selectedReview)}
-                  disabled={loadingAI}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow transition-all disabled:opacity-50"
-                >
-                  <RefreshCw className={`w-3.5 h-3.5 ${loadingAI ? "animate-spin" : ""}`} />
-                  <span>{loadingAI ? "Synthesizing..." : "Regenerate AI Replies"}</span>
-                </button>
+          <div className="bg-card rounded-3xl border border-line sp-card-shadow p-6 sm:p-7 space-y-6">
+            <div className="flex items-center justify-between border-b border-line pb-4">
+              <div>
+                <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">
+                  Target Customer Feedback
+                </span>
+                <h3 className="font-extrabold text-base text-ink mt-0.5">
+                  {selectedReview ? `${selectedReview.authorName} (${selectedReview.rating}★)` : "Select a review"}
+                </h3>
               </div>
+              {selectedReview?.platform === "google" && <GoogleBadge />}
+              {selectedReview?.platform === "trustpilot" && <TrustpilotBadge />}
+            </div>
 
-              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm text-slate-700 italic leading-relaxed">
+            {selectedReview && (
+              <div className="p-4 rounded-2xl bg-stage border border-line text-xs italic text-ink leading-relaxed">
                 &ldquo;{selectedReview.reviewText}&rdquo;
               </div>
+            )}
 
-              {loadingAI && (
-                <div className="py-12 text-center space-y-3">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600 mx-auto" />
-                  <p className="text-xs text-slate-500">
-                    PulseMind™ Neural Engine is extracting sentiment and generating SEO-rich responses...
-                  </p>
-                </div>
-              )}
+            {/* AI Generator Loading State */}
+            {loadingAI && (
+              <div className="py-14 text-center space-y-3">
+                <RefreshCw className="w-8 h-8 text-emerald-500 animate-spin mx-auto" />
+                <p className="text-xs text-mute font-medium">
+                  PulseMind™ Neural Engine is generating 3 strategic response angles...
+                </p>
+              </div>
+            )}
 
-              {!loadingAI && options.length === 0 && (
-                <div className="py-10 text-center space-y-3">
-                  <Bot className="w-10 h-10 text-slate-300 mx-auto" />
-                  <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                    Click &ldquo;Regenerate AI Replies&rdquo; to create 3 ready-to-copy responses optimized for Google My Business and customer retention.
-                  </p>
-                </div>
-              )}
-
-              {!loadingAI && options.length > 0 && (
-                <div className="space-y-4 pt-2">
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-500 block">
-                    3 AI Strategic Reply Drafts:
-                  </span>
-
-                  {options.map((opt) => (
+            {/* AI Options Generated */}
+            {!loadingAI && options.length > 0 && (
+              <div className="space-y-4">
+                {options.map((opt) => {
+                  const isCopied = copiedType === opt.type;
+                  return (
                     <div
                       key={opt.type}
-                      className="p-5 rounded-2xl border border-slate-200 bg-white hover:border-emerald-300 transition-all space-y-3 shadow-sm"
+                      className="p-5 rounded-2xl border border-line bg-stage/40 hover:border-emerald-500/40 transition-all space-y-3"
                     >
-                      <div className="flex items-center justify-between">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <div>
-                          <span className="font-bold text-sm text-slate-900">
+                          <span className="font-extrabold text-sm text-ink block">
                             {opt.title}
                           </span>
-                          <p className="text-[11px] text-slate-500">
+                          <span className="text-[11px] text-mute">
                             {opt.description}
-                          </p>
+                          </span>
                         </div>
                         <button
                           type="button"
                           onClick={() => copyReply(opt.content, opt.type)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-bold text-xs transition-colors"
+                          className="tp-btn-light px-3.5 py-1.5 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 self-start sm:self-auto cursor-pointer"
                         >
-                          {copiedType === opt.type ? (
+                          {isCopied ? (
                             <>
-                              <Check className="w-3.5 h-3.5 text-emerald-600" />
+                              <Check className="w-3.5 h-3.5 text-emerald-500" />
                               <span>Copied!</span>
                             </>
                           ) : (
                             <>
                               <Copy className="w-3.5 h-3.5" />
-                              <span>Copy to Clipboard</span>
+                              <span>Copy Response</span>
                             </>
                           )}
                         </button>
                       </div>
 
-                      <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-100 text-xs text-slate-800 leading-relaxed font-sans">
+                      <p className="text-xs sm:text-sm text-ink leading-relaxed bg-card p-4 rounded-xl border border-line">
                         {opt.content}
-                      </div>
+                      </p>
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+                  );
+                })}
+              </div>
+            )}
+
+            {!loadingAI && options.length === 0 && (
+              <div className="py-12 text-center text-xs text-mute space-y-2">
+                <Sparkles className="w-8 h-8 text-emerald-500 mx-auto" />
+                <p>Click on any review from the queue or tap &ldquo;Regenerate Angles&rdquo; to draft replies.</p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

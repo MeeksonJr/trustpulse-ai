@@ -1,12 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   QrCode,
   Printer,
   Download,
-  ArrowLeft,
   Sparkles,
   ShieldCheck,
   Star,
@@ -14,6 +13,8 @@ import {
   Check,
   Sliders,
   ExternalLink,
+  Smartphone,
+  Eye,
 } from "lucide-react";
 import { TrustPulseStore } from "@/lib/storage/trustpulse-store";
 
@@ -23,22 +24,21 @@ export default function QRStudioPage() {
   const ws = workspaces.find((w) => w.id === selectedWsId) || workspaces[0];
 
   const [heading, setHeading] = useState("How was your visit today?");
-  const [subheading, setSubheading] = useState("Scan to share your feedback & help our team grow");
-  const [color, setColor] = useState(ws.brandColor || "#059669");
+  const [subheading, setSubheading] = useState("Scan with your phone camera to share feedback with our team");
+  const [color, setColor] = useState(ws?.brandColor || "#059669");
   const [includeStars, setIncludeStars] = useState(true);
   const [copiedLink, setCopiedLink] = useState(false);
-  const [origin, setOrigin] = useState("https://seospace-kappa.vercel.app");
+  const [origin, setOrigin] = useState("https://trustpulse-ai-phi.vercel.app");
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (typeof window !== "undefined") {
       setOrigin(window.location.origin);
     }
   }, []);
 
-  const funnelUrl = `${origin}/r/${ws.slug}`;
+  const funnelUrl = `${origin}/r/${ws?.slug || "apex-dental"}`;
 
-  // Generate SVG QR Code representation using pure SVG vectors (no external heavy library required)
-  const qrSvgUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(
+  const qrSvgUrl = `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(
     funnelUrl
   )}&color=${color.replace("#", "")}`;
 
@@ -53,62 +53,67 @@ export default function QRStudioPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
-      {/* Header */}
-      <header className="bg-white border-b border-slate-200 px-4 sm:px-8 py-3.5 flex items-center justify-between print:hidden">
-        <div className="flex items-center gap-3">
-          <Link
-            href="/dashboard"
-            className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </Link>
-          <div>
-            <h1 className="font-bold text-base text-slate-900 flex items-center gap-2">
-              <span>Printable QR Stand Studio</span>
-              <span className="text-[10px] font-mono font-semibold uppercase px-2 py-0.5 rounded bg-emerald-50 text-emerald-700">
-                Table Tent &amp; Counter Flyer
-              </span>
-            </h1>
-            <p className="text-xs text-slate-500">
-              Printable 4x6&quot; review capture cards for clinic desks, dining tables &amp; counters
-            </p>
+    <div className="space-y-8 animate-in fade-in duration-200">
+      {/* Top Banner */}
+      <div className="bg-card border border-line rounded-3xl p-6 sm:p-7 sp-card-shadow flex flex-col md:flex-row md:items-center justify-between gap-6 print:hidden">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+              Hardware &amp; Counter Print Studio
+            </span>
           </div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-ink tracking-tight">
+            Printable QR Counter Stand Studio
+          </h1>
+          <p className="text-xs sm:text-sm text-mute">
+            Generate 4x6&quot; acrylic counter stands and table tents for front reception checkouts.
+          </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
           <button
             type="button"
             onClick={handlePrint}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-md transition-all"
+            className="tp-btn-dark px-5 py-2.5 rounded-xl text-xs font-bold inline-flex items-center gap-2 cursor-pointer shadow-md"
           >
-            <Printer className="w-4 h-4" />
-            <span>Print Counter Stand</span>
+            <Printer className="w-4 h-4 text-emerald-400" />
+            <span>Print 4x6 Stand Card</span>
+          </button>
+          <button
+            type="button"
+            onClick={copyUrl}
+            className="tp-btn-light px-4 py-2.5 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
+          >
+            {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+            <span>{copiedLink ? "Copied Link!" : "Copy QR URL"}</span>
           </button>
         </div>
-      </header>
+      </div>
 
-      {/* Main Studio Body */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-8 py-8 grid lg:grid-cols-12 gap-8 items-start">
-        {/* Controls on Left (5 cols) */}
-        <div className="lg:col-span-5 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6 print:hidden">
-          <h2 className="font-bold text-sm uppercase tracking-wider text-slate-500 flex items-center gap-2">
-            <Sliders className="w-4 h-4" />
-            <span>Card Customizer</span>
-          </h2>
+      {/* Main Studio Body: Controls (5 cols) + Print Card Preview (7 cols) */}
+      <div className="grid lg:grid-cols-12 gap-8 items-start">
+        {/* LEFT COLUMN: CONTROLS */}
+        <div className="lg:col-span-5 bg-card p-6 sm:p-7 rounded-3xl border border-line sp-card-shadow space-y-5 print:hidden">
+          <div className="flex items-center gap-2 pb-3 border-b border-line">
+            <Sliders className="w-4 h-4 text-emerald-500" />
+            <h2 className="font-extrabold text-sm uppercase tracking-wider text-ink">
+              Card Customizer
+            </h2>
+          </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-              Target Location
+            <label className="block text-xs font-bold uppercase tracking-wider text-mute mb-1.5">
+              Target Practice / Location
             </label>
             <select
               value={selectedWsId}
               onChange={(e) => {
                 setSelectedWsId(e.target.value);
                 const target = workspaces.find((w) => w.id === e.target.value);
-                if (target) setColor(target.brandColor);
+                if (target) setColor(target.brandColor || "#059669");
               }}
-              className="w-full text-xs font-semibold bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-800"
+              className="w-full text-xs font-bold bg-stage border border-line rounded-xl px-3.5 py-2.5 text-ink focus:outline-none focus:ring-2 focus:ring-emerald-500"
             >
               {workspaces.map((w) => (
                 <option key={w.id} value={w.id}>
@@ -119,129 +124,137 @@ export default function QRStudioPage() {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-              Headline
+            <label className="block text-xs font-bold uppercase tracking-wider text-mute mb-1.5">
+              Headline Title
             </label>
             <input
               type="text"
               value={heading}
               onChange={(e) => setHeading(e.target.value)}
-              className="w-full text-xs border border-slate-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="w-full text-xs font-bold border border-line bg-stage/50 rounded-xl px-3.5 py-2.5 text-ink focus:outline-none focus:ring-2 focus:ring-emerald-500"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+            <label className="block text-xs font-bold uppercase tracking-wider text-mute mb-1.5">
               Subheadline / Instructions
             </label>
             <input
               type="text"
               value={subheading}
               onChange={(e) => setSubheading(e.target.value)}
-              className="w-full text-xs border border-slate-200 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="w-full text-xs border border-line bg-stage/50 rounded-xl px-3.5 py-2.5 text-ink focus:outline-none focus:ring-2 focus:ring-emerald-500"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+            <label className="block text-xs font-bold uppercase tracking-wider text-mute mb-1.5">
               Brand Accent Color
             </label>
             <div className="flex items-center gap-3">
-              {["#059669", "#2563eb", "#7c3aed", "#e11d48", "#0f172a"].map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  onClick={() => setColor(c)}
-                  className={`w-7 h-7 rounded-full transition-transform ${
-                    color === c ? "scale-125 ring-2 ring-offset-2 ring-slate-900" : ""
-                  }`}
-                  style={{ backgroundColor: c }}
-                />
-              ))}
               <input
                 type="color"
                 value={color}
                 onChange={(e) => setColor(e.target.value)}
-                className="w-8 h-8 rounded-lg cursor-pointer border-0 p-0"
+                className="w-9 h-9 rounded-xl cursor-pointer border border-line p-0.5 bg-transparent"
               />
+              <span className="font-mono text-xs font-bold text-ink">{color}</span>
+              <div className="flex gap-1.5 ml-auto">
+                {["#059669", "#2563eb", "#7c3aed", "#e11d48", "#0f172a"].map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setColor(c)}
+                    className="w-5 h-5 rounded-full border border-line cursor-pointer"
+                    style={{ backgroundColor: c }}
+                  />
+                ))}
+              </div>
             </div>
           </div>
 
-          <div className="pt-4 border-t border-slate-200">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-bold text-slate-800">
-                Customer Direct URL
-              </span>
-              <button
-                type="button"
-                onClick={copyUrl}
-                className="text-xs font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1"
-              >
-                {copiedLink ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                <span>{copiedLink ? "Copied!" : "Copy Link"}</span>
-              </button>
-            </div>
-            <div className="p-3 bg-slate-100 rounded-xl font-mono text-[11px] text-slate-600 break-all border border-slate-200">
-              {funnelUrl}
-            </div>
+          <div className="flex items-center gap-2 pt-2">
+            <input
+              type="checkbox"
+              id="includeStars"
+              checked={includeStars}
+              onChange={(e) => setIncludeStars(e.target.checked)}
+              className="rounded accent-emerald-600 cursor-pointer"
+            />
+            <label htmlFor="includeStars" className="text-xs font-bold text-ink cursor-pointer">
+              Include 5-Star Visual Accent
+            </label>
+          </div>
+
+          {/* Tips Card */}
+          <div className="p-4 rounded-2xl bg-stage border border-line text-xs space-y-1.5">
+            <span className="font-bold text-ink flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
+              <span>Counter Stand Placement Tip</span>
+            </span>
+            <p className="text-mute text-[11px] leading-relaxed">
+              Standard 4x6&quot; acrylic holders fit this exact template. Clinics experience a 340% increase in verified reviews when patients scan while waiting for receipt printout.
+            </p>
           </div>
         </div>
 
-        {/* Live Printable Preview Canvas on Right (7 cols) */}
+        {/* RIGHT COLUMN: 4x6 PHYSICAL CARD MOCKUP */}
         <div className="lg:col-span-7 flex justify-center">
-          {/* 4x6" Table Stand Container */}
-          <div
-            id="printable-card"
-            className="w-full max-w-sm bg-white rounded-3xl border-2 border-slate-300 shadow-2xl overflow-hidden p-8 text-center flex flex-col justify-between items-center min-h-[540px] relative print:border-none print:shadow-none print:m-0"
-          >
-            {/* Top Brand Bar */}
+          <div className="w-full max-w-sm p-8 sm:p-10 rounded-3xl border-2 border-line bg-card text-ink shadow-2xl text-center space-y-6 relative overflow-hidden">
+            {/* Top Brand Stripe */}
             <div
-              className="absolute top-0 left-0 right-0 h-3"
+              className="h-2.5 w-full rounded-full transition-colors"
               style={{ backgroundColor: color }}
             />
 
-            {/* Header */}
-            <div className="space-y-3 pt-4">
+            <div>
               <div
-                className="w-14 h-14 rounded-2xl mx-auto flex items-center justify-center text-white font-bold text-xl shadow-md"
+                className="w-14 h-14 rounded-2xl mx-auto mb-3 flex items-center justify-center text-white font-extrabold text-xl shadow-md ring-4 ring-card"
                 style={{ backgroundColor: color }}
               >
-                {ws.name.charAt(0)}
+                {ws?.name.charAt(0) || "A"}
               </div>
-              <h2 className="text-xl font-black text-slate-900 tracking-tight leading-snug">
-                {ws.name}
-              </h2>
+              <h3 className="font-black text-xl text-ink tracking-tight">
+                {ws?.name || "Apex Cosmetic Dentistry"}
+              </h3>
+              <p className="text-[11px] text-mute uppercase tracking-wider font-semibold mt-0.5">
+                {ws?.category || "Cosmetic & Orthodontic Care"}
+              </p>
+            </div>
+
+            {includeStars && (
               <div className="flex justify-center text-amber-400 gap-1">
                 {Array.from({ length: 5 }).map((_, i) => (
                   <Star key={i} className="w-5 h-5 fill-amber-400" />
                 ))}
               </div>
-            </div>
+            )}
 
-            {/* Middle: Crisp QR Code */}
-            <div className="my-6 p-4 bg-slate-50 border-2 border-slate-200 rounded-2xl shadow-inner">
+            {/* QR Code Container */}
+            <div className="p-5 bg-stage/80 border border-line rounded-2xl inline-block shadow-inner">
               <img
                 src={qrSvgUrl}
-                alt={`QR code for ${ws.name}`}
-                className="w-44 h-44 mx-auto object-contain"
+                alt="Patient Review QR Code"
+                className="w-48 h-48 mx-auto object-contain rounded-xl"
               />
-              <div className="text-[10px] font-mono font-bold text-slate-500 uppercase tracking-widest mt-2">
-                Point Camera &amp; Tap
+              <div className="text-[10px] font-mono font-bold text-mute uppercase tracking-widest mt-2.5 flex items-center justify-center gap-1.5">
+                <Smartphone className="w-3.5 h-3.5 text-emerald-500" />
+                <span>Open Camera &amp; Tap Screen</span>
               </div>
             </div>
 
-            {/* Footer Prompt */}
-            <div className="space-y-1.5 pb-2">
-              <h3 className="text-base font-bold text-slate-900">
+            <div className="space-y-1">
+              <h4 className="text-base font-extrabold text-ink">
                 {heading}
-              </h3>
-              <p className="text-xs text-slate-500 max-w-xs leading-relaxed">
+              </h4>
+              <p className="text-xs text-mute max-w-xs mx-auto leading-relaxed">
                 {subheading}
               </p>
-              <div className="pt-3 text-[10px] text-slate-400 font-medium flex items-center justify-center gap-1">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Verified Private &amp; Public Customer Funnel</span>
-              </div>
+            </div>
+
+            <div className="pt-3 border-t border-line text-[10px] text-mute flex items-center justify-center gap-1.5">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+              <span>Protected by TrustPulse AI Negative Review Shield™</span>
             </div>
           </div>
         </div>

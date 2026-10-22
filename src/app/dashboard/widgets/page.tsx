@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Code2,
@@ -9,20 +9,25 @@ import {
   Eye,
   Sliders,
   Sparkles,
-  ArrowLeft,
   Star,
   ShieldCheck,
   CheckCircle2,
+  ExternalLink,
+  Layers,
+  LayoutGrid,
+  Bell,
+  RefreshCw,
+  BadgeCheck,
 } from "lucide-react";
 import { TrustPulseStore } from "@/lib/storage/trustpulse-store";
-import { WidgetConfig, WidgetType, WidgetTheme } from "@/types/trustpulse";
+import { WidgetType, WidgetTheme } from "@/types/trustpulse";
+import { GoogleBadge, TrustpilotBadge } from "@/components/ui/PlatformBadges";
 
 export default function WidgetStudioPage() {
   const workspaces = TrustPulseStore.getWorkspaces();
   const [selectedWsId, setSelectedWsId] = useState<string>("ws-apex-dental");
   const ws = workspaces.find((w) => w.id === selectedWsId) || workspaces[0];
 
-  // Config states
   const [widgetType, setWidgetType] = useState<WidgetType>("toast_notification");
   const [theme, setTheme] = useState<WidgetTheme>("glassmorphism");
   const [position, setPosition] = useState<"bottom_left" | "bottom_right">("bottom_left");
@@ -30,10 +35,10 @@ export default function WidgetStudioPage() {
   const [loopInterval, setLoopInterval] = useState<number>(6);
   const [copiedScript, setCopiedScript] = useState(false);
   const [copiedIframe, setCopiedIframe] = useState(false);
-  const [origin, setOrigin] = useState("https://seospace-kappa.vercel.app");
+  const [origin, setOrigin] = useState("https://trustpulse-ai-phi.vercel.app");
   const [testToastActive, setTestToastActive] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (typeof window !== "undefined") {
       setOrigin(window.location.origin);
     }
@@ -70,99 +75,106 @@ export default function WidgetStudioPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
-      {/* Header */}
-      <header className="bg-white border-b border-slate-200 px-4 sm:px-8 py-3.5 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Link
-            href="/dashboard"
-            className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </Link>
-          <div>
-            <h1 className="font-bold text-base text-slate-900 flex items-center gap-2">
-              <span>Widget Studio</span>
-              <span className="text-[10px] font-mono font-semibold uppercase px-2 py-0.5 rounded bg-emerald-50 text-emerald-700">
-                1-Line Embed
-              </span>
-            </h1>
-            <p className="text-xs text-slate-500">
-              Configure and preview embeddable social proof widgets for any website
-            </p>
+    <div className="space-y-8 animate-in fade-in duration-200">
+      {/* Top Banner */}
+      <div className="bg-card border border-line rounded-3xl p-6 sm:p-7 sp-card-shadow flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+              Widget Engine
+            </span>
           </div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-ink tracking-tight">
+            Embeddable Social Proof Studio
+          </h1>
+          <p className="text-xs sm:text-sm text-mute">
+            Configure, preview, and copy 1-line async scripts for {ws?.name}.
+          </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <select
-            value={selectedWsId}
-            onChange={(e) => setSelectedWsId(e.target.value)}
-            className="text-xs font-semibold bg-slate-100 border border-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none text-slate-800"
+        <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            onClick={triggerLiveTestToast}
+            className="tp-btn-dark px-4 py-2.5 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer shadow-md"
           >
-            {workspaces.map((w) => (
-              <option key={w.id} value={w.id}>
-                {w.name}
-              </option>
-            ))}
-          </select>
+            <Bell className="w-3.5 h-3.5 text-amber-400" />
+            <span>Test Toast In Browser</span>
+          </button>
+          <Link
+            href="/demo/apex-dental-site"
+            target="_blank"
+            className="tp-btn-light px-4 py-2.5 rounded-xl text-xs font-bold inline-flex items-center gap-1.5"
+          >
+            <span>Live Client Demo</span>
+            <ExternalLink className="w-3 h-3" />
+          </Link>
         </div>
-      </header>
+      </div>
 
-      {/* Main Studio Body */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-8 py-8 grid lg:grid-cols-12 gap-8 items-start">
-        {/* Left Column: Controls (5 cols) */}
-        <div className="lg:col-span-5 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
-          <h2 className="font-bold text-sm uppercase tracking-wider text-slate-500 flex items-center gap-2">
-            <Sliders className="w-4 h-4" />
-            <span>Widget Configuration</span>
-          </h2>
+      {/* Main Studio Grid: Controls (5 cols) + Live Preview (7 cols) */}
+      <div className="grid lg:grid-cols-12 gap-8 items-start">
+        {/* LEFT COLUMN: CONTROLS */}
+        <div className="lg:col-span-5 bg-card p-6 sm:p-7 rounded-3xl border border-line sp-card-shadow space-y-6">
+          <div className="flex items-center gap-2 pb-3 border-b border-line">
+            <Sliders className="w-4 h-4 text-emerald-500" />
+            <h2 className="font-extrabold text-sm uppercase tracking-wider text-ink">
+              Widget Settings
+            </h2>
+          </div>
 
           {/* 1. Widget Type */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-2">
-              Widget Format
+            <label className="block text-xs font-bold text-mute uppercase tracking-wider mb-2">
+              Widget Layout Format
             </label>
             <div className="grid grid-cols-3 gap-2">
               {[
-                { id: "toast_notification", label: "Floating Toast" },
-                { id: "wall_of_love", label: "Wall of Love" },
-                { id: "floating_pill", label: "Rating Badge" },
-              ].map((t) => (
-                <button
-                  key={t.id}
-                  type="button"
-                  onClick={() => setWidgetType(t.id as WidgetType)}
-                  className={`py-2 px-3 rounded-xl text-xs font-bold transition-all border ${
-                    widgetType === t.id
-                      ? "bg-slate-900 text-white border-slate-900 shadow"
-                      : "bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200"
-                  }`}
-                >
-                  {t.label}
-                </button>
-              ))}
+                { id: "toast_notification", label: "Floating Toast", icon: Bell },
+                { id: "wall_of_love", label: "Wall of Love", icon: LayoutGrid },
+                { id: "floating_pill", label: "Rating Badge", icon: BadgeCheck },
+              ].map((t) => {
+                const Icon = t.icon;
+                const isSelected = widgetType === t.id;
+                return (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => setWidgetType(t.id as WidgetType)}
+                    className={`py-2.5 px-2 rounded-2xl text-xs font-bold transition-all border flex flex-col items-center gap-1.5 cursor-pointer ${
+                      isSelected
+                        ? "bg-slate-900 text-white dark:bg-emerald-600 border-slate-900 dark:border-emerald-600 shadow-md"
+                        : "bg-stage/50 hover:bg-stage text-mute hover:text-ink border-line"
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    <span className="text-[11px]">{t.label}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
-          {/* 2. Theme */}
+          {/* 2. Visual Theme */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-2">
+            <label className="block text-xs font-bold text-mute uppercase tracking-wider mb-2">
               Visual Theme
             </label>
             <div className="grid grid-cols-3 gap-2">
               {[
-                { id: "glassmorphism", label: "Glassmorphic" },
-                { id: "light", label: "Clean Light" },
-                { id: "dark", label: "Deep Dark" },
+                { id: "glassmorphism", label: "Glassmorphism" },
+                { id: "light", label: "Clean White" },
+                { id: "dark", label: "Dark Mode" },
               ].map((th) => (
                 <button
                   key={th.id}
                   type="button"
                   onClick={() => setTheme(th.id as WidgetTheme)}
-                  className={`py-2 px-3 rounded-xl text-xs font-bold transition-all border ${
+                  className={`py-2 px-2.5 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
                     theme === th.id
-                      ? "bg-slate-900 text-white border-slate-900 shadow"
-                      : "bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200"
+                      ? "bg-slate-900 text-white dark:bg-emerald-600 border-slate-900 dark:border-emerald-600 shadow-xs"
+                      : "bg-stage/50 hover:bg-stage text-mute border-line"
                   }`}
                 >
                   {th.label}
@@ -171,20 +183,20 @@ export default function WidgetStudioPage() {
             </div>
           </div>
 
-          {/* 3. Position (for Toast or Pill) */}
+          {/* 3. Screen Position */}
           {widgetType !== "wall_of_love" && (
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-2">
+              <label className="block text-xs font-bold text-mute uppercase tracking-wider mb-2">
                 Screen Position
               </label>
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
                   onClick={() => setPosition("bottom_left")}
-                  className={`py-2 px-3 rounded-xl text-xs font-bold transition-all border ${
+                  className={`py-2 px-3 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
                     position === "bottom_left"
-                      ? "bg-slate-900 text-white border-slate-900"
-                      : "bg-slate-50 text-slate-700 border-slate-200"
+                      ? "bg-slate-900 text-white dark:bg-emerald-600 border-slate-900 dark:border-emerald-600 shadow-xs"
+                      : "bg-stage/50 hover:bg-stage text-mute border-line"
                   }`}
                 >
                   Bottom Left (Standard)
@@ -192,10 +204,10 @@ export default function WidgetStudioPage() {
                 <button
                   type="button"
                   onClick={() => setPosition("bottom_right")}
-                  className={`py-2 px-3 rounded-xl text-xs font-bold transition-all border ${
+                  className={`py-2 px-3 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
                     position === "bottom_right"
-                      ? "bg-slate-900 text-white border-slate-900"
-                      : "bg-slate-50 text-slate-700 border-slate-200"
+                      ? "bg-slate-900 text-white dark:bg-emerald-600 border-slate-900 dark:border-emerald-600 shadow-xs"
+                      : "bg-stage/50 hover:bg-stage text-mute border-line"
                   }`}
                 >
                   Bottom Right
@@ -206,270 +218,209 @@ export default function WidgetStudioPage() {
 
           {/* 4. Minimum Rating Filter */}
           <div>
-            <div className="flex justify-between text-xs font-semibold text-slate-700 mb-2">
-              <span>Minimum Star Rating to Display:</span>
-              <span className="text-amber-500 font-bold font-mono">
-                {"★".repeat(minRating)} ({minRating}+ Stars)
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-xs font-bold text-mute uppercase tracking-wider">
+                Minimum Rating to Display
+              </label>
+              <span className="text-xs font-bold text-amber-500 font-mono">
+                {minRating} Stars &amp; Above
               </span>
             </div>
             <input
               type="range"
-              min={3}
-              max={5}
+              min="3"
+              max="5"
+              step="1"
               value={minRating}
-              onChange={(e) => setMinRating(Number(e.target.value))}
-              className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-600"
+              onChange={(e) => setMinRating(parseInt(e.target.value, 10))}
+              className="w-full accent-emerald-600 cursor-pointer"
             />
+            <div className="flex justify-between text-[10px] text-mute font-mono mt-1">
+              <span>3★+</span>
+              <span>4★+ (Recommended)</span>
+              <span>5★ Only</span>
+            </div>
           </div>
 
-          {/* 5. Loop Interval */}
-          {widgetType === "toast_notification" && (
-            <div>
-              <div className="flex justify-between text-xs font-semibold text-slate-700 mb-2">
-                <span>Display Timing per Review:</span>
-                <span className="font-mono text-emerald-600 font-bold">
-                  {loopInterval} seconds
-                </span>
-              </div>
-              <input
-                type="range"
-                min={4}
-                max={15}
-                value={loopInterval}
-                onChange={(e) => setLoopInterval(Number(e.target.value))}
-                className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-600"
-              />
-            </div>
-          )}
+          {/* Embed Snippets Box */}
+          <div className="pt-4 border-t border-line space-y-3">
+            <span className="text-xs font-bold uppercase tracking-wider text-ink block">
+              Embed Code Snippet
+            </span>
 
-          {/* Embed Snippets Code Box */}
-          <div className="pt-4 border-t border-slate-200 space-y-4">
-            <button
-              type="button"
-              onClick={triggerLiveTestToast}
-              className="w-full py-2.5 px-4 rounded-xl font-bold text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center justify-center gap-2 transition cursor-pointer shadow-xs"
-            >
-              <Sparkles className="w-4 h-4 text-emerald-600" />
-              <span>⚡ Test Live Toast on this Screen</span>
-            </button>
-
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-xs font-bold text-slate-800">
-                  A. 1-Line Async Script (Recommended)
+            {/* Script Tag */}
+            <div className="p-3.5 rounded-2xl bg-slate-950 text-emerald-400 font-mono text-[11px] border border-slate-800 break-all space-y-2">
+              <div>{scriptSnippet}</div>
+              <div className="flex items-center justify-between pt-1 border-t border-slate-800">
+                <span className="text-[10px] text-slate-400 font-sans">
+                  Under 15KB • CORS wildcard
                 </span>
                 <button
                   type="button"
                   onClick={copyScript}
-                  className="text-xs font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1 cursor-pointer"
+                  className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] inline-flex items-center gap-1 transition-colors cursor-pointer"
                 >
-                  {copiedScript ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                  <span>{copiedScript ? "Copied!" : "Copy"}</span>
+                  {copiedScript ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                  <span>{copiedScript ? "Copied!" : "Copy Script"}</span>
                 </button>
-              </div>
-              <div className="p-3 bg-slate-900 text-slate-200 rounded-xl font-mono text-[11px] break-all border border-slate-800">
-                {scriptSnippet}
               </div>
             </div>
 
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-xs font-bold text-slate-800">
-                  B. Responsive iFrame Snippet
-                </span>
-                <button
-                  type="button"
-                  onClick={copyIframe}
-                  className="text-xs font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1 cursor-pointer"
-                >
-                  {copiedIframe ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                  <span>{copiedIframe ? "Copied!" : "Copy"}</span>
-                </button>
-              </div>
-              <div className="p-3 bg-slate-900 text-slate-200 rounded-xl font-mono text-[11px] break-all border border-slate-800">
-                {iframeSnippet}
-              </div>
+            {/* iFrame alternative */}
+            <div className="p-3 rounded-2xl bg-stage/70 border border-line text-xs flex items-center justify-between">
+              <span className="text-mute text-[11px]">Need an iframe embed?</span>
+              <button
+                type="button"
+                onClick={copyIframe}
+                className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer"
+              >
+                {copiedIframe ? "Copied iFrame!" : "Copy iFrame Code"}
+              </button>
             </div>
           </div>
         </div>
 
-        {/* Right Column: Live Interactive Canvas (7 cols) */}
-        <div className="lg:col-span-7 space-y-4">
-          <div className="flex items-center justify-between text-xs text-slate-500 font-mono">
-            <span className="flex items-center gap-1.5">
-              <Eye className="w-4 h-4 text-emerald-600" />
-              <span>Real-Time Browser Simulation</span>
-            </span>
-            <span>{sampleReviews.length} Qualifying Reviews</span>
-          </div>
-
-          {/* Browser Mockup */}
-          <div className="bg-slate-900 rounded-3xl border border-slate-800 shadow-2xl overflow-hidden min-h-[500px] flex flex-col justify-between p-6 relative">
-            {/* Mock website header */}
-            <div className="pb-4 border-b border-slate-800 flex items-center justify-between text-slate-400 text-xs">
+        {/* RIGHT COLUMN: LIVE VISUAL PREVIEW */}
+        <div className="lg:col-span-7 space-y-6">
+          <div className="bg-card rounded-3xl border border-line sp-card-shadow p-6 sm:p-8 space-y-6">
+            <div className="flex items-center justify-between border-b border-line pb-4">
               <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 rounded-full bg-slate-700" />
-                <span className="w-2.5 h-2.5 rounded-full bg-slate-700" />
-                <span className="w-2.5 h-2.5 rounded-full bg-slate-700" />
-                <span className="ml-2 font-mono text-[11px] text-slate-500">
-                  https://{ws.slug}.com
-                </span>
+                <Eye className="w-4 h-4 text-emerald-500" />
+                <h3 className="font-extrabold text-sm text-ink uppercase tracking-wider">
+                  Live Browser Preview
+                </h3>
               </div>
-              <span className="text-[11px] text-emerald-400 font-mono">
-                ● Live Inject
+              <span className="text-[10px] font-mono font-bold uppercase text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">
+                Interactive Preview
               </span>
             </div>
 
-            {/* Mock website body content */}
-            <div className="py-8 text-center space-y-3 opacity-30 select-none">
-              <div className="h-6 w-48 bg-slate-700 rounded-full mx-auto" />
-              <div className="h-3 w-80 bg-slate-800 rounded-full mx-auto" />
-              <div className="h-3 w-64 bg-slate-800 rounded-full mx-auto" />
-            </div>
+            {/* Mockup Client Browser Frame */}
+            <div className="rounded-2xl border border-line bg-stage/60 overflow-hidden shadow-inner p-6 min-h-[380px] flex flex-col justify-between relative">
+              {/* Fake Website Content */}
+              <div className="space-y-3 opacity-60 pointer-events-none">
+                <div className="h-4 w-32 bg-mute/20 rounded-md" />
+                <div className="h-8 w-64 bg-mute/30 rounded-lg" />
+                <div className="h-3 w-80 bg-mute/20 rounded-md" />
+                <div className="h-3 w-72 bg-mute/20 rounded-md" />
+              </div>
 
-            {/* LIVE WIDGET RENDERED ON CANVAS */}
-            <div className="relative z-10 py-6">
+              {/* PREVIEW: 1. FLOATING TOAST NOTIFICATION */}
               {widgetType === "toast_notification" && (
                 <div
-                  className={`w-full max-w-sm rounded-2xl p-4 shadow-2xl flex gap-3.5 items-start animate-fade-in ${
+                  className={`mt-auto ${
                     position === "bottom_right" ? "ml-auto" : "mr-auto"
-                  } ${
+                  } max-w-sm w-full p-4 rounded-2xl border transition-all duration-300 shadow-2xl ${
                     theme === "dark"
-                      ? "bg-slate-950 border border-slate-800 text-white"
-                      : theme === "light"
-                      ? "bg-white border border-slate-200 text-slate-900"
-                      : "bg-slate-900/90 backdrop-blur-md border border-white/10 text-white"
+                      ? "bg-slate-900/95 text-white border-slate-800"
+                      : theme === "glassmorphism"
+                      ? "bg-card/90 backdrop-blur-xl text-ink border-line"
+                      : "bg-card text-ink border-line"
                   }`}
                 >
-                  <div
-                    className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0 shadow"
-                    style={{ backgroundColor: ws.brandColor }}
-                  >
-                    {sampleReviews[0]?.authorName.charAt(0) || "C"}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-bold text-xs truncate">
-                        {sampleReviews[0]?.authorName || "Valued Client"}
-                      </span>
-                      <div className="flex text-amber-400">
-                        {Array.from({ length: sampleReviews[0]?.rating || 5 }).map((_, i) => (
-                          <Star key={i} className="w-3.5 h-3.5 fill-amber-400" />
-                        ))}
-                      </div>
+                  <div className="flex items-start gap-3">
+                    <div className="w-9 h-9 rounded-full bg-emerald-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
+                      {sampleReviews[0]?.authorName.charAt(0) || "J"}
                     </div>
-                    <p className="text-xs text-slate-300 leading-relaxed line-clamp-2">
-                      &ldquo;{sampleReviews[0]?.reviewText || "Excellent service!"}&rdquo;
-                    </p>
-                    <div className="mt-2 flex items-center justify-between text-[10px] text-slate-400 font-mono">
-                      <span className="text-emerald-400 font-semibold flex items-center gap-1">
-                        <CheckCircle2 className="w-3 h-3" />
-                        Verified Appointment
-                      </span>
-                      <span>Just now</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-extrabold text-xs text-ink truncate">
+                          {sampleReviews[0]?.authorName || "Marcus Vance"}
+                        </span>
+                        <div className="flex text-amber-400 text-xs">★★★★★</div>
+                      </div>
+                      <p className="text-[11px] text-mute mt-1 line-clamp-2 leading-relaxed">
+                        &ldquo;{sampleReviews[0]?.reviewText || "Painless sedation, luxurious clinic ambiance, and pristine hygiene. Highly recommend!"}&rdquo;
+                      </p>
+                      <div className="flex items-center justify-between mt-2 pt-1 border-t border-line text-[10px] text-mute font-medium">
+                        <span>Verified Patient • Google Maps</span>
+                        <span className="text-emerald-500 font-bold">✓ Verified</span>
+                      </div>
                     </div>
                   </div>
                 </div>
               )}
 
+              {/* PREVIEW: 2. WALL OF LOVE */}
               {widgetType === "wall_of_love" && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full animate-fade-in">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 my-auto">
                   {sampleReviews.slice(0, 4).map((r) => (
                     <div
                       key={r.id}
-                      className="p-4 rounded-xl border border-slate-800 bg-slate-950/80 text-white text-xs space-y-2"
+                      className={`p-3.5 rounded-2xl border text-xs space-y-2 ${
+                        theme === "dark"
+                          ? "bg-slate-900 text-white border-slate-800"
+                          : "bg-card text-ink border-line"
+                      }`}
                     >
                       <div className="flex items-center justify-between">
-                        <span className="font-bold">{r.authorName}</span>
-                        <div className="flex text-amber-400">
-                          {Array.from({ length: r.rating }).map((_, i) => (
-                            <Star key={i} className="w-3 h-3 fill-amber-400" />
-                          ))}
-                        </div>
+                        <span className="font-bold text-ink">{r.authorName}</span>
+                        <span className="text-amber-400 text-[10px]">★★★★★</span>
                       </div>
-                      <p className="text-slate-300 text-[11px] leading-relaxed line-clamp-3">
+                      <p className="text-[11px] text-mute line-clamp-2 leading-relaxed italic">
                         &ldquo;{r.reviewText}&rdquo;
                       </p>
-                      <div className="text-[10px] text-emerald-400 font-semibold">
-                        ✓ {r.platform.toUpperCase()} Review
+                      <div className="text-[9px] text-mute pt-1 border-t border-line">
+                        {r.platform} • {r.authorRole || "Patient"}
                       </div>
                     </div>
                   ))}
                 </div>
               )}
 
+              {/* PREVIEW: 3. FLOATING STAR BADGE */}
               {widgetType === "floating_pill" && (
                 <div
-                  className={`animate-fade-in inline-block ${
-                    position === "bottom_right" ? "float-right" : "float-left"
+                  className={`mt-auto ${
+                    position === "bottom_right" ? "ml-auto" : "mr-auto"
+                  } p-3 rounded-full border inline-flex items-center gap-3 shadow-xl ${
+                    theme === "dark"
+                      ? "bg-slate-900 text-white border-slate-800"
+                      : "bg-card text-ink border-line"
                   }`}
                 >
-                  <div className="inline-flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-slate-950 text-white shadow-2xl border border-slate-800">
-                    <span className="text-amber-400 font-bold">★</span>
-                    <span className="font-bold text-xs">
-                      {ws.stats.averageRating} / 5.0
-                    </span>
-                    <span className="text-[11px] text-slate-400 border-l border-slate-800 pl-2.5">
-                      {ws.stats.totalReviews}+ Verified Reviews
-                    </span>
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <div className="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center font-bold text-xs">
+                    <ShieldCheck className="w-4 h-4" />
                   </div>
+                  <div>
+                    <div className="flex items-center gap-1 font-bold text-xs text-ink">
+                      <span>4.94</span>
+                      <span className="text-amber-400">★★★★★</span>
+                    </div>
+                    <span className="text-[10px] text-mute block leading-none">
+                      184 Google Reviews
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-bold text-emerald-500 uppercase px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 mr-1">
+                    Verified
+                  </span>
                 </div>
               )}
-            </div>
-
-            {/* Bottom notice */}
-            <div className="pt-3 border-t border-slate-800 text-[11px] text-slate-500 flex justify-between items-center">
-              <span>Pure Vanilla Script: &lt; 15KB uncompressed</span>
-              <span>CORS: Wildcard `*` Allowed</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Floating Live Test Toast Overlay (Triggers when "Test Live Toast" is clicked) */}
+      {/* Floating Active Test Toast (when clicked) */}
       {testToastActive && (
-        <div
-          className={`fixed z-50 transition-all duration-500 animate-slide-up ${
-            position === "bottom_right" ? "bottom-6 right-6" : "bottom-6 left-6"
-          }`}
-        >
-          <div className="bg-slate-950/95 backdrop-blur-md text-white border border-white/15 rounded-2xl p-4 shadow-2xl max-w-sm flex gap-3.5 items-start ring-1 ring-emerald-500/30">
-            <div
-              className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0 shadow"
-              style={{ backgroundColor: ws.brandColor || "#10b981" }}
-            >
-              {sampleReviews[0]?.authorName?.charAt(0) || "S"}
+        <div className="fixed bottom-6 left-6 z-50 bg-slate-900/95 backdrop-blur-md text-white border border-slate-700 rounded-2xl p-4 shadow-2xl max-w-sm animate-in fade-in slide-in-from-bottom-6 duration-200">
+          <div className="flex items-start gap-3">
+            <div className="w-9 h-9 rounded-full bg-emerald-600 text-white font-bold text-sm flex items-center justify-center shrink-0">
+              M
             </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between mb-1">
-                <span className="font-bold text-xs truncate">
-                  {sampleReviews[0]?.authorName || "Verified Patient"}
-                </span>
-                <div className="flex text-amber-400">
-                  {Array.from({ length: sampleReviews[0]?.rating || 5 }).map((_, i) => (
-                    <Star key={i} className="w-3.5 h-3.5 fill-amber-400" />
-                  ))}
-                </div>
+            <div>
+              <div className="flex items-center justify-between gap-4">
+                <span className="font-bold text-xs text-white">Marcus Vance</span>
+                <span className="text-amber-400 text-xs">★★★★★</span>
               </div>
-              <p className="text-xs text-slate-300 leading-relaxed line-clamp-2">
-                &ldquo;{sampleReviews[0]?.reviewText || "Outstanding experience with our team!"}&rdquo;
+              <p className="text-[11px] text-slate-300 mt-1 line-clamp-2 leading-relaxed">
+                &ldquo;Painless sedation, luxurious clinic ambiance, and pristine hygiene. My smile looks radiant!&rdquo;
               </p>
-              <div className="mt-2 flex items-center justify-between text-[10px] text-slate-400 font-mono">
-                <span className="text-emerald-400 font-semibold flex items-center gap-1">
-                  <CheckCircle2 className="w-3 h-3" />
-                  Verified Social Proof
-                </span>
-                <span className="text-slate-500">Live Test</span>
+              <div className="flex items-center justify-between mt-2 text-[10px] text-slate-400">
+                <span>Porcelain Veneers</span>
+                <span className="text-emerald-400 font-bold">✓ Verified Google Patient</span>
               </div>
             </div>
-            <button
-              type="button"
-              onClick={() => setTestToastActive(false)}
-              className="text-slate-400 hover:text-white text-xs cursor-pointer ml-1"
-            >
-              ✕
-            </button>
           </div>
         </div>
       )}
