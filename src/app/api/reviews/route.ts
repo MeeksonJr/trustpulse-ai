@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { TrustPulseStore } from "@/lib/storage/trustpulse-store";
+import { getServerSupabaseAdmin } from "@/lib/supabase/client";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -30,6 +31,30 @@ export async function POST(request: Request) {
       isVerified: true,
       isFeatured: body.isFeatured !== undefined ? body.isFeatured : true,
     });
+
+    // Sync to Supabase in background
+    try {
+      const supabase = getServerSupabaseAdmin();
+      if (supabase) {
+        await supabase.from("trustpulse_reviews").insert({
+          id: newReview.id,
+          workspace_id: newReview.workspaceId,
+          author_name: newReview.authorName,
+          author_avatar: newReview.authorAvatar || null,
+          author_role: newReview.authorRole,
+          author_location: newReview.authorLocation || "",
+          rating: newReview.rating,
+          review_text: newReview.reviewText,
+          platform: newReview.platform,
+          sentiment: newReview.sentiment,
+          review_date: newReview.reviewDate,
+          is_verified: newReview.isVerified,
+          is_featured: newReview.isFeatured,
+        });
+      }
+    } catch (dbErr) {
+      console.warn("[TrustPulse] Supabase review sync notice:", dbErr);
+    }
 
     return NextResponse.json({ success: true, review: newReview });
   } catch (err: unknown) {

@@ -18,7 +18,7 @@ export function renderShieldAlertEmailHtml(props: ShieldAlertEmailProps): string
   const brandColor = props.brandColor || "#10b981";
   const stars = "★".repeat(props.rating) + "☆".repeat(5 - props.rating);
   const dashboardUrl =
-    props.dashboardShieldUrl || "https://seospace-kappa.vercel.app/dashboard/shield";
+    props.dashboardShieldUrl || "https://trustpulse-ai-phi.vercel.app/dashboard/shield";
 
   return `
 <!DOCTYPE html>
@@ -313,12 +313,68 @@ export function renderWeeklyDigestEmailHtml(props: WeeklyDigestEmailProps): stri
               <table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top: 30px;">
                 <tr>
                   <td align="center">
-                    <a href="https://seospace-kappa.vercel.app/dashboard" style="display: inline-block; background-color: #10b981; color: #09090b; text-decoration: none; padding: 14px 28px; border-radius: 14px; font-size: 13px; font-weight: 800;">
+                    <a href="https://trustpulse-ai-phi.vercel.app/dashboard" style="display: inline-block; background-color: #10b981; color: #09090b; text-decoration: none; padding: 14px 28px; border-radius: 14px; font-size: 13px; font-weight: 800;">
                       View Live Command Center →
                     </a>
                   </td>
                 </tr>
               </table>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `.trim();
+}
+
+export interface SignupConfirmationEmailProps {
+  userName: string;
+  confirmationUrl: string;
+}
+
+export function renderSignupConfirmationEmailHtml(props: SignupConfirmationEmailProps): string {
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Confirm Your TrustPulse AI Account</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #0f172a;">
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color: #f8fafc; padding: 40px 15px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width: 560px; background-color: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">
+          <tr>
+            <td style="background-color: #059669; padding: 28px 32px; text-align: center;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 22px; font-weight: 800; letter-spacing: -0.5px;">
+                TrustPulse<span style="opacity: 0.8;">.ai</span>
+              </h1>
+              <p style="margin: 4px 0 0 0; color: rgba(255,255,255,0.9); font-size: 12px; font-family: monospace;">
+                Autonomous Social Proof & Negative Review Shield
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 36px 32px;">
+              <h2 style="margin: 0 0 16px 0; font-size: 18px; font-weight: 700; color: #0f172a;">
+                Welcome to TrustPulse AI, ${props.userName}!
+              </h2>
+              <p style="margin: 0 0 20px 0; font-size: 14px; line-height: 1.6; color: #475569;">
+                Thank you for creating your account. Please click the button below to verify your email address and activate your reputation management workspace:
+              </p>
+              <div style="text-align: center; margin: 28px 0;">
+                <a href="${props.confirmationUrl}" style="display: inline-block; background-color: #059669; color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 12px; font-size: 14px; font-weight: 700; box-shadow: 0 4px 12px rgba(5, 150, 105, 0.25);">
+                  Verify Email & Launch Workspace →
+                </a>
+              </div>
+              <p style="margin: 24px 0 0 0; font-size: 12px; line-height: 1.5; color: #94a3b8; text-align: center;">
+                If you did not sign up for TrustPulse AI, please disregard this email.
+              </p>
             </td>
           </tr>
         </table>

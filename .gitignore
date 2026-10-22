@@ -38,6 +38,7 @@ scratch/
 
 # vercel
 .vercel
+.agents/
 
 # typescript
 *.tsbuildinfo

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { TrustPulseStore } from "@/lib/storage/trustpulse-store";
+import { getServerSupabaseAdmin } from "@/lib/supabase/client";
 import { Workspace } from "@/types/trustpulse";
 
 export async function GET(req: NextRequest) {
@@ -82,6 +83,28 @@ export async function POST(req: NextRequest) {
     };
 
     const saved = TrustPulseStore.saveWorkspace(newWorkspace);
+
+    // Sync to Supabase PostgreSQL
+    try {
+      const supabase = getServerSupabaseAdmin();
+      if (supabase) {
+        await supabase.from("trustpulse_workspaces").upsert({
+          id: saved.id,
+          name: saved.name,
+          slug: saved.slug,
+          category: saved.category,
+          brand_color: saved.brandColor,
+          google_review_url: saved.googleReviewUrl,
+          trustpilot_url: saved.trustpilotUrl || null,
+          star_threshold: saved.starThreshold,
+          custom_headline: saved.customHeadline,
+          custom_subheadline: saved.customSubheadline,
+          stats: saved.stats,
+        });
+      }
+    } catch (dbErr) {
+      console.warn("[TrustPulse] Supabase workspace sync notice:", dbErr);
+    }
 
     return NextResponse.json({
       success: true,

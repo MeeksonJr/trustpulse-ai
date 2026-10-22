@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { TrustPulseStore } from "@/lib/storage/trustpulse-store";
+import { getServerSupabaseAdmin } from "@/lib/supabase/client";
 import {
   sendEmailWithGoogleSmtp,
   getGoogleSmtpConfig,
@@ -40,6 +41,27 @@ export async function POST(request: Request) {
       grievanceText,
       status: "new",
     });
+
+    // 1b. Sync to Supabase PostgreSQL table
+    try {
+      const supabase = getServerSupabaseAdmin();
+      if (supabase) {
+        await supabase.from("trustpulse_grievances").insert({
+          id: feedback.id,
+          workspace_id: workspaceId,
+          campaign_id: campaignId || null,
+          rating: Number(rating),
+          customer_name: customerName,
+          customer_email: customerEmail,
+          customer_phone: customerPhone || "",
+          grievance_text: grievanceText,
+          status: "new",
+          created_at: new Date().toISOString(),
+        });
+      }
+    } catch (dbErr) {
+      console.warn("[TrustPulse] Supabase grievance sync notice:", dbErr);
+    }
 
     // 2. Fetch workspace details for brand styling
     const workspace =
