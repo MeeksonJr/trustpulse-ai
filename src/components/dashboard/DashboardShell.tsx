@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   ShieldCheck,
   LayoutDashboard,
@@ -27,9 +27,11 @@ import {
   Sliders,
   Send,
   Plus,
+  LogOut,
 } from "lucide-react";
 import { TrustPulseLogo } from "@/components/ui/TrustPulseLogo";
 import { TrustPulseStore } from "@/lib/storage/trustpulse-store";
+import { logoutWorkspaceUser } from "@/lib/storage/workspace-store";
 import { Workspace } from "@/types/trustpulse";
 
 interface DashboardShellProps {
@@ -53,12 +55,26 @@ interface NavGroup {
 
 export function DashboardShell({ children }: DashboardShellProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [selectedWsId, setSelectedWsId] = useState<string>("ws-apex-dental");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isDark, setIsDark] = useState(false);
   const [unreadGrievanceCount, setUnreadGrievanceCount] = useState(1);
   const [showWorkspaceMenu, setShowWorkspaceMenu] = useState(false);
+
+  const handleSignOut = () => {
+    logoutWorkspaceUser();
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.removeItem("tp_user_session");
+        localStorage.removeItem("tp_active_workspace");
+      } catch {
+        //
+      }
+    }
+    router.push("/login");
+  };
 
   useEffect(() => {
     // Check dark mode
@@ -396,28 +412,39 @@ export function DashboardShell({ children }: DashboardShellProps) {
           </Link>
         </div>
 
-        {/* User Profile Pill */}
+        {/* User Profile Pill & Sign Out */}
         <div className="flex items-center justify-between pt-1 text-xs">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-full bg-slate-900 dark:bg-slate-800 text-white flex items-center justify-center font-bold text-xs ring-1 ring-line">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 rounded-full bg-slate-900 dark:bg-slate-800 text-white flex items-center justify-center font-bold text-xs ring-1 ring-line shrink-0">
               DT
             </div>
-            <div>
-              <div className="font-bold text-ink text-xs leading-none">
+            <div className="min-w-0">
+              <div className="font-bold text-ink text-xs leading-none truncate">
                 Dr. Thorne
               </div>
-              <span className="text-[10px] text-mute">Practice Owner</span>
+              <span className="text-[10px] text-mute truncate block mt-0.5">Practice Owner</span>
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={toggleTheme}
-            className="p-2 rounded-xl text-mute hover:text-ink hover:bg-stage border border-line transition-colors cursor-pointer"
-            title="Toggle Theme"
-          >
-            {isDark ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
-          </button>
+          <div className="flex items-center gap-1 shrink-0">
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="p-1.5 rounded-xl text-mute hover:text-ink hover:bg-stage border border-line transition-colors cursor-pointer"
+              title="Toggle Day/Night Mode"
+            >
+              {isDark ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
+            </button>
+
+            <button
+              type="button"
+              onClick={handleSignOut}
+              className="p-1.5 rounded-xl text-mute hover:text-rose-500 hover:bg-rose-500/10 border border-line transition-colors cursor-pointer"
+              title="Sign Out"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -522,6 +549,17 @@ export function DashboardShell({ children }: DashboardShellProps) {
                 {currentWorkspace.name}
               </span>
             </div>
+
+            {/* Header Sign Out Action */}
+            <button
+              type="button"
+              onClick={handleSignOut}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-line bg-stage hover:bg-rose-500/10 hover:border-rose-500/30 text-mute hover:text-rose-600 text-xs font-bold transition-colors cursor-pointer"
+              title="Sign out of your session"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Sign Out</span>
+            </button>
           </div>
         </header>
 

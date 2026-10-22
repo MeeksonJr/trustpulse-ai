@@ -68,7 +68,26 @@ export default function WidgetStudioPage() {
     };
   }, []);
 
-  const sampleReviews = TrustPulseStore.getReviews(ws?.id).filter((r) => r.rating >= minRating);
+  const [reviewsList, setReviewsList] = useState<any[]>(() => TrustPulseStore.getReviews(ws?.id));
+
+  useEffect(() => {
+    if (!ws?.id) return;
+    setReviewsList(TrustPulseStore.getReviews(ws.id));
+
+    fetch(`/api/reviews?workspaceId=${encodeURIComponent(ws.id)}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.reviews) && data.reviews.length > 0) {
+          setReviewsList(data.reviews);
+          for (const rev of data.reviews) {
+            TrustPulseStore.addReview(rev);
+          }
+        }
+      })
+      .catch((err) => console.warn("[TrustPulse] Widget reviews sync notice:", err));
+  }, [selectedWsId, ws?.id]);
+
+  const sampleReviews = reviewsList.filter((r) => r.rating >= minRating);
 
   const widgetId = `widget-${ws?.slug || "apex-dental"}-${
     widgetType === "toast_notification"

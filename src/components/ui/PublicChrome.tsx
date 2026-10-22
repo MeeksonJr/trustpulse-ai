@@ -173,21 +173,21 @@ export function PublicNavbar({
   }, [open]);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 px-2.5 sm:px-4 lg:px-6 pt-2 sm:pt-3 pointer-events-none transition-all duration-300">
-      <div
-        className={`mx-auto max-w-5xl xl:max-w-6xl w-full flex items-center justify-between gap-2 sm:gap-4 relative rounded-2xl border border-line bg-card/80 backdrop-blur-xl px-3 sm:px-4 py-2 pointer-events-auto transition-all duration-300 ${
-          isScrolled
-            ? "shadow-xl border-line/90 bg-card/98 scale-[0.99]"
-            : "sp-card-shadow"
-        }`}
-      >
+    <header
+      className={`sticky top-0 z-50 w-full border-b transition-all duration-200 ${
+        isScrolled
+          ? "border-line bg-card/95 backdrop-blur-xl shadow-sm py-2.5"
+          : "border-line/70 bg-card/85 backdrop-blur-md py-3"
+      }`}
+    >
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 w-full flex items-center justify-between gap-2 sm:gap-4">
         {/* Brand Logo */}
         <Link href="/" className="shrink-0 pl-0.5" aria-label="TrustPulse AI home">
           <TrustPulseLogo auto size="sm" />
         </Link>
 
         {/* Desktop Navigation Links */}
-        <nav className="hidden md:flex items-center gap-0.5 lg:gap-1 text-[0.85rem] font-medium min-w-0 absolute left-1/2 -translate-x-1/2">
+        <nav className="hidden md:flex items-center gap-0.5 lg:gap-1 text-[0.85rem] font-medium min-w-0">
           {[
             { href: "/#shield", label: "Review Shield" },
             { href: "/#widgets", label: "Widgets" },
@@ -206,7 +206,7 @@ export function PublicNavbar({
         </nav>
 
         {/* Right CTA cluster */}
-        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 ml-auto">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 ml-auto md:ml-0">
           <ThemeToggleButton isDark={isDark} onToggle={onToggleTheme} />
 
           <Link
@@ -218,7 +218,7 @@ export function PublicNavbar({
 
           <Link
             href="/dashboard"
-            className="inline-flex items-center justify-center gap-1.5 rounded-full bg-ink text-paper font-semibold text-[0.85rem] px-4 py-1.5 transition-all hover:-translate-y-0.5 shadow-[0_8px_20px_-8px_rgba(15,23,42,0.6)]"
+            className="inline-flex items-center justify-center gap-1.5 rounded-full bg-ink text-paper font-semibold text-[0.85rem] px-4 py-1.5 transition-all hover:-translate-y-0.5 shadow-sm"
           >
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" />
             Live demo
@@ -252,7 +252,7 @@ export function PublicNavbar({
 
       {/* Mobile drop menu */}
       {open && (
-        <div className="md:hidden fixed inset-x-3 top-16 z-50 rounded-3xl border border-line bg-card p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200 text-ink pointer-events-auto">
+        <div className="md:hidden fixed inset-x-3 top-16 z-50 rounded-3xl border border-line bg-card p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200 text-ink">
           <nav className="flex flex-col space-y-3">
             {[
               { href: "/#shield", label: "Negative Review Shield" },

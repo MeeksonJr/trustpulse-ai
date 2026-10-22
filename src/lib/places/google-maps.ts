@@ -74,6 +74,9 @@ const SECTOR_ARCHETYPES = [
       "Pristine hygiene protocols, gentle chairside manner, and zero wait time. They thoroughly explained my treatment plan.",
       "I had dental anxiety for years, but the doctor and clinical team made my visit completely relaxed and painless.",
       "Outstanding front desk reception and transparent billing. Highly recommend this practice to anyone in the area!",
+      "The entire staff from hygienist to doctor is world-class. Modern digital scanners and zero discomfort during my crown procedure.",
+      "Five stars without question. Professional, punctual, and genuinely invested in preventative oral health.",
+      "Best dental clinic I have visited in over a decade. Seamless appointment scheduling and crystal-clear post-op care guidance.",
     ],
   },
   {
@@ -84,6 +87,9 @@ const SECTOR_ARCHETYPES = [
       "Exceptional food, prompt table service, and vibrant ambiance. The signature dishes are absolute perfection.",
       "Celebrated a family birthday here and the staff went above and beyond to make the evening special.",
       "Fresh quality ingredients and generous portions. Easily one of the top culinary spots in the neighborhood!",
+      "Warm hospitality, creative cocktail pairings, and flawless execution. The dessert course alone is worth visiting for.",
+      "Outstanding culinary experience from appetizers through dessert. Attentive servers who anticipate every need.",
+      "Consistently incredible food and wonderful lively atmosphere. A must-visit gem in the dining scene.",
     ],
   },
   {
@@ -94,6 +100,9 @@ const SECTOR_ARCHETYPES = [
       "Fierce, articulate legal advocacy paired with constant transparent communication from start to resolution.",
       "Handled our legal matter with deep expertise and attention to detail. Kept us informed at every step.",
       "Knowledgeable, professional, and compassionate attorneys who truly fight for their clients' best interests.",
+      "Unmatched strategic guidance during a complex commercial dispute. Secured an outcome that surpassed our expectations.",
+      "Prompt responses, thorough preparation, and deep integrity throughout the legal process.",
+      "Exceptional representation. Their litigation team was prepared, articulate, and completely commanding in negotiation.",
     ],
   },
   {
@@ -104,6 +113,9 @@ const SECTOR_ARCHETYPES = [
       "Luxurious, pristine clinic ambiance with natural, radiant results. The practitioner took time to assess my skin goals.",
       "Extremely knowledgeable aesthetic staff and calming treatment rooms. My skin has never looked healthier!",
       "Top-tier client care from the moment you walk through the door. Wonderful experience with noticeable glow.",
+      "Remarkable attention to safety, facial harmony, and patient comfort. The results look completely effortless and natural.",
+      "Pristine medical-grade aesthetic treatment. The team explains every step and makes you feel like an absolute VIP.",
+      "Five-star sanctuary for skincare. State-of-the-art lasers and exceptionally gentle aesthetic injectors.",
     ],
   },
   {
@@ -114,6 +126,9 @@ const SECTOR_ARCHETYPES = [
       "Honest diagnostics, fair itemized estimates, and certified master technicians who explain everything with clarity.",
       "Fast turnaround time and they even washed my vehicle before pickup. Reliable mechanics you can genuinely trust.",
       "Fixed an intricate issue that other repair shops misdiagnosed. Car runs like brand new!",
+      "Transparent digital inspection reports sent straight to my phone with high-res photos before doing any work.",
+      "Fair pricing, OEM factory parts, and master technicians who stand behind their warranty 100%.",
+      "The only auto shop I trust with my family vehicles. Honesty and precision engineering at its best.",
     ],
   },
   {
@@ -124,6 +139,9 @@ const SECTOR_ARCHETYPES = [
       "Arrived exactly on schedule, diagnosed the issue within 20 minutes, and completed repairs cleanly.",
       "Courteous crew that wore protective shoe covers and provided a clear upfront price quote.",
       "Dependable workmanship and responsive communication. Will definitely be using them for future home projects.",
+      "Emergency service when our heating failed on a sub-zero evening. Technician arrived in 40 minutes and had it running.",
+      "Top craftsmanship, clean job site, and flawless installation. Great warranty protection and polite crew.",
+      "Transparent pricing without any surprise add-ons. Rare to find contractors who execute with this degree of professionalism.",
     ],
   },
 ];

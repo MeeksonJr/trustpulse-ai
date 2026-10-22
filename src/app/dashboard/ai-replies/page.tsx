@@ -58,10 +58,24 @@ export default function AIReplyStudioPage() {
   }, []);
 
   useEffect(() => {
-    const list = TrustPulseStore.getReviews(ws?.id);
+    if (!ws?.id) return;
+    const list = TrustPulseStore.getReviews(ws.id);
     setReviews(list);
     setSelectedReview(list[0] || null);
     setOptions([]);
+
+    fetch(`/api/reviews?workspaceId=${encodeURIComponent(ws.id)}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.reviews) && data.reviews.length > 0) {
+          setReviews(data.reviews);
+          setSelectedReview(data.reviews[0] || null);
+          for (const rev of data.reviews) {
+            TrustPulseStore.addReview(rev);
+          }
+        }
+      })
+      .catch((err) => console.warn("[TrustPulse] AI replies sync notice:", err));
   }, [selectedWsId, ws?.id]);
 
   const generateReplies = async (review: ReviewItem) => {

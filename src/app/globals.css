@@ -282,6 +282,8 @@ html:not(.sp-js) [data-reveal] { opacity: 1; transform: none; }
 .font-editorial { font-family: var(--f-display), sans-serif; }
 
 @media print {
-  .no-print, .sp-progress { display: none !important; }
-  body { background: #ffffff !important; }
+  .no-print, .sp-progress, aside, header, nav { display: none !important; }
+  body { background: #ffffff !important; color: #000000 !important; }
+  .print-page-break { page-break-after: always; break-after: page; }
+  .print-only { display: block !important; }
 }

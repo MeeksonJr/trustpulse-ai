@@ -83,6 +83,7 @@ export async function POST(request: Request) {
       success: true,
       message: `Client workspace for "${workspace.name}" created with live QR funnel and embed widgets.`,
       workspace,
+      reviews,
       reviewCount: reviews.length,
       widgetsGenerated: widgets.map((w) => w.id),
       funnelUrl: `/r/${workspace.slug}`,

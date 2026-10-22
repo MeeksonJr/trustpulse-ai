@@ -57,7 +57,7 @@ export default function HomePage() {
         {/* =========================================================================
             1. HERO SECTION: Antimetal + YowManage Soft Sky Gradient & Interactive Mockup
            ========================================================================= */}
-        <section className="tp-hero-bg relative px-4 sm:px-6 lg:px-8 pt-28 sm:pt-36 pb-20 sm:pb-28 overflow-hidden">
+        <section className="tp-hero-bg relative px-4 sm:px-6 lg:px-8 pt-14 sm:pt-20 pb-20 sm:pb-28 overflow-hidden">
           {/* Engineered-grid nodes */}
           <span className="tp-node hidden md:block" style={{ left: "calc(50% - 480px)", top: "120px" }} />
           <span className="tp-node hidden md:block" style={{ left: "calc(50% + 460px)", top: "240px" }} />

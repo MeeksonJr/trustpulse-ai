@@ -106,8 +106,32 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
-    setReviewsList(TrustPulseStore.getReviews(currentWorkspace?.id));
-    setFeedback(TrustPulseStore.getPrivateFeedback(currentWorkspace?.id));
+    if (!currentWorkspace?.id) return;
+    // 1. Immediate local load
+    setReviewsList(TrustPulseStore.getReviews(currentWorkspace.id));
+    setFeedback(TrustPulseStore.getPrivateFeedback(currentWorkspace.id));
+
+    // 2. Fresh cloud & API fetch to hydrate reviews for any client added via Google Maps
+    fetch(`/api/reviews?workspaceId=${encodeURIComponent(currentWorkspace.id)}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.reviews) && data.reviews.length > 0) {
+          setReviewsList(data.reviews);
+          for (const rev of data.reviews) {
+            TrustPulseStore.addReview(rev);
+          }
+        }
+      })
+      .catch((err) => console.warn("[TrustPulse] Reviews sync notice:", err));
+
+    fetch(`/api/shield?workspaceId=${encodeURIComponent(currentWorkspace.id)}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.feedback)) {
+          setFeedback(data.feedback);
+        }
+      })
+      .catch((err) => console.warn("[TrustPulse] Grievance sync notice:", err));
   }, [selectedWsId, currentWorkspace?.id]);
 
   const handleAddReview = async (e: React.FormEvent) => {
