@@ -346,46 +346,69 @@ export function PublicFooter({
   return (
     <>
       <MotionEffects />
-      <footer className="mt-auto bg-slate-950 text-slate-100 relative overflow-hidden border-t border-slate-800">
-        <div className="mx-auto max-w-[88rem] px-5 sm:px-8 pt-16 sm:pt-24">
-          <div className="grid lg:grid-cols-12 gap-10 items-end">
-            <h2 className="sp-display text-[clamp(2.4rem,7vw,6.5rem)] lg:col-span-8 text-white">
-              Protect your stars.
-              <br />
-              Amplify your <span className="text-emerald-400">social proof.</span>
-            </h2>
-            <div className="lg:col-span-4 space-y-5">
-              <p className="text-slate-300 text-[0.95rem] leading-relaxed max-w-sm">
-                Shield local businesses from unfair 1-star public reviews while streaming verified 5-star customer praise into high-converting website widgets.
-              </p>
-              <div className="flex flex-wrap gap-3">
-                <Link
-                  href="/dashboard"
-                  className="inline-flex items-center justify-center rounded-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-6 py-3 transition-colors shadow-lg shadow-emerald-500/20"
-                >
-                  Open Live Demo Workspace <span aria-hidden className="ml-1">↗</span>
-                </Link>
-                <Link
-                  href="/r/apex-dental"
-                  target="_blank"
-                  className="inline-flex items-center justify-center rounded-full border border-slate-700 hover:bg-slate-900 text-white font-medium px-5 py-3 transition-colors"
-                >
-                  Test QR Shield Funnel
-                </Link>
+      <footer className="mt-auto relative overflow-hidden bg-stage border-t border-line">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 pt-16 sm:pt-24">
+          {/* CTA band */}
+          <div className="relative overflow-hidden rounded-[28px] bg-slate-950 text-white px-6 sm:px-12 py-12 sm:py-16 tp-window-shadow">
+            <div
+              aria-hidden="true"
+              className="absolute inset-0 opacity-70"
+              style={{
+                background:
+                  "radial-gradient(50% 70% at 85% 0%, rgba(16,185,129,0.45), transparent 70%), radial-gradient(40% 60% at 0% 100%, rgba(37,99,235,0.35), transparent 70%)",
+              }}
+            />
+            <div
+              aria-hidden="true"
+              className="absolute inset-0 opacity-[0.12]"
+              style={{
+                backgroundImage:
+                  "linear-gradient(to right, #fff 1px, transparent 1px), linear-gradient(to bottom, #fff 1px, transparent 1px)",
+                backgroundSize: "60px 60px",
+                WebkitMaskImage: "radial-gradient(70% 90% at 50% 50%, #000 20%, transparent 80%)",
+                maskImage: "radial-gradient(70% 90% at 50% 50%, #000 20%, transparent 80%)",
+              }}
+            />
+            <div className="relative grid lg:grid-cols-12 gap-8 items-center">
+              <h2 className="lg:col-span-8 text-[clamp(2rem,5vw,3.6rem)] font-extrabold tracking-[-0.035em] leading-[1.03]">
+                Protect your stars.
+                <br />
+                Amplify your <span className="text-emerald-400">social proof.</span>
+              </h2>
+              <div className="lg:col-span-4 space-y-4">
+                <p className="text-slate-300 text-[0.95rem] leading-relaxed">
+                  Shield your business from unfair 1-star reviews while streaming verified 5-star praise to your website.
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  <Link
+                    href="/dashboard"
+                    className="inline-flex items-center justify-center gap-2 rounded-full bg-white text-slate-950 font-semibold px-6 py-3 text-sm transition-transform hover:-translate-y-0.5"
+                  >
+                    Open live demo <span aria-hidden>↗</span>
+                  </Link>
+                  <Link
+                    href="/r/apex-dental"
+                    target="_blank"
+                    className="inline-flex items-center justify-center rounded-full border border-white/25 hover:bg-white/10 text-white font-medium px-5 py-3 text-sm transition-colors"
+                  >
+                    Test the QR funnel
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="mt-16 sm:mt-20 grid grid-cols-2 lg:grid-cols-5 gap-x-6 gap-y-10 border-t border-slate-800/80 pt-10">
+          {/* Link columns */}
+          <div className="mt-16 grid grid-cols-2 lg:grid-cols-5 gap-x-6 gap-y-10">
             <div className="col-span-2 lg:col-span-1 space-y-4">
-              <TrustPulseLogo darkText={false} />
-              <p className="text-xs leading-relaxed text-slate-400 max-w-[16rem]">
-                Autonomous Social Proof, Multi-Source Review Aggregator &amp; Negative Review Shield for Local Businesses &amp; Agencies.
+              <TrustPulseLogo auto />
+              <p className="text-xs leading-relaxed text-mute max-w-[16rem]">
+                Autonomous social proof, multi-source review aggregation and a negative review shield for local businesses and agencies.
               </p>
             </div>
             {FOOT_COLS.map((col) => (
               <div key={col.title}>
-                <div className="sp-eyebrow text-slate-400 mb-4">{col.title}</div>
+                <div className="text-[0.7rem] font-semibold uppercase tracking-[0.14em] text-ink mb-4">{col.title}</div>
                 <ul className="space-y-2.5 text-[0.85rem]">
                   {col.links.map((l) => (
                     <li key={l.label}>
@@ -394,15 +417,12 @@ export function PublicFooter({
                           href={l.href}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-slate-300 hover:text-emerald-400 transition-colors font-mono text-[0.78rem]"
+                          className="text-mute hover:text-ink transition-colors font-mono text-[0.78rem]"
                         >
                           {l.label} ↗
                         </a>
                       ) : (
-                        <Link
-                          href={l.href}
-                          className="text-slate-300 hover:text-emerald-400 transition-colors"
-                        >
+                        <Link href={l.href} className="text-mute hover:text-ink transition-colors">
                           {l.label}
                         </Link>
                       )}
@@ -413,28 +433,27 @@ export function PublicFooter({
             ))}
           </div>
 
-          <div className="mt-14 py-6 border-t border-slate-800/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs text-slate-400">
+          {/* Bottom bar */}
+          <div className="mt-14 py-6 border-t border-line flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-xs text-mute">
             <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              All systems operational · © {new Date().getFullYear()} TrustPulse AI Inc. Built for zero-cost operation.
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              All systems operational · © {new Date().getFullYear()} TrustPulse AI Inc.
             </div>
             <div className="flex items-center gap-5">
               <button
                 type="button"
                 onClick={() => triggerSiteNavigator(true)}
-                className="hover:text-white cursor-pointer"
+                className="hover:text-ink cursor-pointer"
               >
                 All pages
               </button>
-              {onToggleTheme && (
-                <ThemeToggleButton isDark={isDark} onToggle={onToggleTheme} />
-              )}
+              {onToggleTheme && <ThemeToggleButton isDark={isDark} onToggle={onToggleTheme} />}
             </div>
           </div>
         </div>
         <div
           aria-hidden="true"
-          className="sp-display select-none text-center text-[clamp(4.5rem,24vw,22rem)] leading-[0.72] text-white/[0.035] -mb-[0.06em] pointer-events-none"
+          className="sp-display select-none text-center text-[clamp(4.5rem,24vw,22rem)] leading-[0.72] text-ink/[0.04] -mb-[0.06em] pointer-events-none"
         >
           trustpulse
         </div>

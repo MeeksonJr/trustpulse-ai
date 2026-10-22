@@ -1,40 +1,69 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   PublicFooter,
   PublicNavbar,
   usePublicTheme,
 } from "@/components/ui/PublicChrome";
-import { Code2, Play, Check, Copy } from "lucide-react";
+import {
+  PageHero,
+  Section,
+  Card,
+  Eyebrow,
+} from "@/components/ui/Primitives";
+import {
+  Code2,
+  Play,
+  Check,
+  Copy,
+  Terminal,
+  ShieldCheck,
+  Sparkles,
+  Search,
+  ExternalLink,
+  Send,
+  Boxes,
+} from "lucide-react";
 
 interface EndpointDef {
   id: string;
-  method: string;
+  method: "GET" | "POST";
   path: string;
   title: string;
   description: string;
   defaultBody: string;
+  queryParams?: string;
+  sampleCurl: (origin: string) => string;
+  sampleNode: (origin: string) => string;
+  samplePython: (origin: string) => string;
 }
 
 const ENDPOINTS: EndpointDef[] = [
   {
-    id: "widget-feed",
+    id: "places-lookup",
     method: "GET",
-    path: "/api/widget/widget-apex-wall",
-    title: "Public Widget Review Feed & Configuration (CORS Enabled)",
+    path: "/api/places/lookup",
+    queryParams: "?query=Hotels%20in%20San%20Francisco%2C%20USA&limit=5",
+    title: "Google Maps RapidAPI Auto-Onboarding & Search",
     description:
-      "Returns approved customer reviews filtered by minRating and maximum review count, along with the workspace branding. Accessible from any third-party domain via wildcard CORS.",
+      "Performs real-time local business discovery from Google Maps via RapidAPI. Pulls full business name, category, star rating, total review count, phone, address, and Google Maps place ID.",
     defaultBody: "",
+    sampleCurl: (origin) =>
+      `curl -X GET "${origin}/api/places/lookup?query=Hotels%20in%20San%20Francisco%2C%20USA&limit=5"`,
+    sampleNode: (origin) =>
+      `const res = await fetch("${origin}/api/places/lookup?query=Apex%20Dental&limit=1");\nconst data = await res.json();\nconsole.log(data.businesses);`,
+    samplePython: (origin) =>
+      `import requests\n\nres = requests.get("${origin}/api/places/lookup", params={"query": "Apex Dental", "limit": 1})\nprint(res.json())`,
   },
   {
     id: "shield-submit",
     method: "POST",
     path: "/api/shield/submit",
-    title: "Negative Review Shield — Private Grievance Capture",
+    title: "Negative Review Shield — Private Grievance Interception",
     description:
-      "Intercepts 1-3 star feedback from the customer funnel (/r/[slug]). Stores the grievance privately in TrustPulse, alerts the business manager, and prevents negative reviews from reaching Google Maps.",
+      "Captures 1–3 star ratings from the public customer QR funnel (/r/[slug]). Stores the grievance privately in PostgreSQL on Supabase, dispatches instant SMTP leadership alerts, and prevents public Google rating damage.",
     defaultBody: JSON.stringify(
       {
         workspaceId: "ws-apex-dental",
@@ -48,14 +77,35 @@ const ENDPOINTS: EndpointDef[] = [
       null,
       2
     ),
+    sampleCurl: (origin) =>
+      `curl -X POST "${origin}/api/shield/submit" \\\n  -H "Content-Type: application/json" \\\n  -d '{"workspaceId":"ws-apex-dental","rating":2,"customerName":"Alex Morgan","customerEmail":"alex.m@example.com","grievanceText":"Appointment was delayed by 20 minutes."}'`,
+    sampleNode: (origin) =>
+      `const res = await fetch("${origin}/api/shield/submit", {\n  method: "POST",\n  headers: { "Content-Type": "application/json" },\n  body: JSON.stringify({\n    workspaceId: "ws-apex-dental",\n    rating: 2,\n    customerName: "Alex Morgan",\n    customerEmail: "alex.m@example.com",\n    grievanceText: "Appointment was delayed by 20 minutes."\n  })\n});\nconst result = await res.json();`,
+    samplePython: (origin) =>
+      `import requests\n\npayload = {\n    "workspaceId": "ws-apex-dental",\n    "rating": 2,\n    "customerName": "Alex Morgan",\n    "customerEmail": "alex.m@example.com",\n    "grievanceText": "Appointment was delayed by 20 minutes."\n}\nres = requests.post("${origin}/api/shield/submit", json=payload)\nprint(res.json())`,
+  },
+  {
+    id: "widget-feed",
+    method: "GET",
+    path: "/api/widget/widget-apex-wall",
+    title: "Public Widget Review Feed & Config (CORS Enabled)",
+    description:
+      "Returns approved customer reviews filtered by minRating and maximum count, along with workspace branding. Open wildcard CORS enabled for cross-domain embed consumption.",
+    defaultBody: "",
+    sampleCurl: (origin) =>
+      `curl -X GET "${origin}/api/widget/widget-apex-wall"`,
+    sampleNode: (origin) =>
+      `const res = await fetch("${origin}/api/widget/widget-apex-wall");\nconst data = await res.json();\nconsole.log(data.reviews);`,
+    samplePython: (origin) =>
+      `import requests\n\nres = requests.get("${origin}/api/widget/widget-apex-wall")\nprint(res.json())`,
   },
   {
     id: "ai-reply",
     method: "POST",
     path: "/api/reviews/ai-reply",
-    title: "PulseMind™ AI Review Responder & Sentiment Intelligence",
+    title: "PulseMind™ AI Review Responder & Sentiment Engine",
     description:
-      "Analyzes customer sentiment and synthesizes 3 strategic reply angles (SEO-Boosted Gratitude, De-escalation & Empathy, Loyalty Reward) powered by the proprietary PulseMind™ Neural Engine.",
+      "Analyzes customer sentiment and synthesizes 3 strategic reply angles (SEO-Boosted Gratitude, De-escalation & Empathy, Loyalty Reward) with local keyword injection.",
     defaultBody: JSON.stringify(
       {
         reviewId: "rev-1",
@@ -64,22 +114,40 @@ const ENDPOINTS: EndpointDef[] = [
       null,
       2
     ),
+    sampleCurl: (origin) =>
+      `curl -X POST "${origin}/api/reviews/ai-reply" \\\n  -H "Content-Type: application/json" \\\n  -d '{"reviewId":"rev-1","workspaceId":"ws-apex-dental"}'`,
+    sampleNode: (origin) =>
+      `const res = await fetch("${origin}/api/reviews/ai-reply", {\n  method: "POST",\n  headers: { "Content-Type": "application/json" },\n  body: JSON.stringify({ reviewId: "rev-1", workspaceId: "ws-apex-dental" })\n});\nconst data = await res.json();`,
+    samplePython: (origin) =>
+      `import requests\n\nres = requests.post("${origin}/api/reviews/ai-reply", json={"reviewId": "rev-1", "workspaceId": "ws-apex-dental"})\nprint(res.json())`,
   },
   {
-    id: "importer",
+    id: "email-test",
     method: "POST",
-    path: "/api/importer",
-    title: "Multi-Platform Review Importer",
+    path: "/api/email/test",
+    title: "Google SMTP Practice Alert Dispatch",
     description:
-      "Imports customer feedback from Google Places, Trustpilot, or CSV records into your workspace database.",
+      "Sends a test responsive HTML practice alert email to verify Google SMTP credentials and inbox delivery under 5 seconds.",
     defaultBody: JSON.stringify(
       {
-        workspaceId: "ws-apex-dental",
-        source: "google",
+        to: "buyer-test@example.com",
+        templateType: "shield_alert",
+        customData: {
+          businessName: "Apex Cosmetic Dentistry",
+          rating: 2,
+          customerName: "Buyer Test",
+          grievanceText: "Hygiene appointment started late.",
+        },
       },
       null,
       2
     ),
+    sampleCurl: (origin) =>
+      `curl -X POST "${origin}/api/email/test" \\\n  -H "Content-Type: application/json" \\\n  -d '{"to":"demo@example.com","templateType":"shield_alert"}'`,
+    sampleNode: (origin) =>
+      `const res = await fetch("${origin}/api/email/test", {\n  method: "POST",\n  headers: { "Content-Type": "application/json" },\n  body: JSON.stringify({ to: "demo@example.com", templateType: "shield_alert" })\n});`,
+    samplePython: (origin) =>
+      `import requests\n\nres = requests.post("${origin}/api/email/test", json={"to": "demo@example.com", "templateType": "shield_alert"})\nprint(res.json())`,
   },
 ];
 
@@ -87,12 +155,13 @@ export default function DocsPage() {
   const { isDark, toggleTheme } = usePublicTheme(false);
   const [activeEndpoint, setActiveEndpoint] = useState<EndpointDef>(ENDPOINTS[0]);
   const [requestBody, setRequestBody] = useState<string>(ENDPOINTS[0].defaultBody);
-  const [responseOutput, setResponseOutput] = useState<string>("// Click 'Execute Request' to test this endpoint live in your browser");
+  const [responseOutput, setResponseOutput] = useState<string>("// Click 'Execute Request' to test this endpoint live");
   const [loading, setLoading] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const [origin, setOrigin] = useState("https://seospace-kappa.vercel.app");
+  const [activeCodeTab, setActiveCodeTab] = useState<"curl" | "node" | "python">("curl");
+  const [copiedScript, setCopiedScript] = useState(false);
+  const [origin, setOrigin] = useState("https://trustpulse-ai-phi.vercel.app");
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (typeof window !== "undefined") {
       setOrigin(window.location.origin);
     }
@@ -106,13 +175,17 @@ export default function DocsPage() {
 
   const handleExecute = async () => {
     setLoading(true);
-    setResponseOutput("// Sending request to " + activeEndpoint.path + "...");
+    const targetUrl = activeEndpoint.queryParams
+      ? `${activeEndpoint.path}${activeEndpoint.queryParams}`
+      : activeEndpoint.path;
+
+    setResponseOutput("// Executing request to " + targetUrl + "...");
     try {
       let res: Response;
       if (activeEndpoint.method === "GET") {
-        res = await fetch(activeEndpoint.path);
+        res = await fetch(targetUrl);
       } else {
-        res = await fetch(activeEndpoint.path, {
+        res = await fetch(targetUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: requestBody || "{}",
@@ -128,151 +201,256 @@ export default function DocsPage() {
     }
   };
 
-  const handleCopyCode = () => {
+  const copyEmbedScript = () => {
     navigator.clipboard.writeText(
       `<script src="${origin}/api/widget/script?id=widget-apex-toasts" defer></script>`
     );
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    setCopiedScript(true);
+    setTimeout(() => setCopiedScript(false), 2000);
+  };
+
+  const getActiveCode = () => {
+    switch (activeCodeTab) {
+      case "curl":
+        return activeEndpoint.sampleCurl(origin);
+      case "node":
+        return activeEndpoint.sampleNode(origin);
+      case "python":
+        return activeEndpoint.samplePython(origin);
+    }
   };
 
   return (
-    <div className="sp-page min-h-screen flex flex-col bg-[var(--sp-paper)] text-[var(--sp-ink)]">
+    <div className="min-h-screen flex flex-col bg-paper text-ink transition-colors selection:bg-emerald-500 selection:text-white">
       <PublicNavbar isDark={isDark} onToggleTheme={toggleTheme} />
 
-      <main className="flex-1 px-4 sm:px-6 lg:px-8 pt-24 pb-16">
-        <div className="max-w-6xl mx-auto space-y-12">
-          {/* Header */}
-          <div className="space-y-4">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-mono font-semibold uppercase tracking-wider">
-              <Code2 className="w-3.5 h-3.5" />
-              REST API &amp; Embed Specification
+      <main className="flex-1">
+        {/* Page Hero */}
+        <PageHero
+          eyebrow="Developer Documentation & REST API"
+          title={
+            <>
+              API Reference &amp;{" "}
+              <span className="text-emerald-600 dark:text-emerald-400">
+                Embed Specification
+              </span>
+            </>
+          }
+          subtitle="Explore the complete TrustPulse REST endpoints: RapidAPI Google Places lookups, the Negative Review Shield pipeline, PulseMind™ AI replies, and embed scripts."
+        />
+
+        {/* 1-Line Embed Callout Banner */}
+        <Section tone="stage" className="!py-6 border-b border-line">
+          <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-2xl bg-card border border-line">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold">
+                <Code2 className="w-5 h-5" />
+              </div>
+              <div>
+                <span className="text-xs font-bold text-ink block">
+                  Quick Embed: 1-Line HTML Widget Script
+                </span>
+                <span className="text-[11px] text-mute font-mono">
+                  &lt;script src=&quot;{origin}/api/widget/script?id=widget-apex-toasts&quot; defer&gt;&lt;/script&gt;
+                </span>
+              </div>
             </div>
-            <h1 className="sp-display text-3xl sm:text-5xl font-bold tracking-tight">
-              Developer &amp; Integration Hub
-            </h1>
-            <p className="text-base sm:text-lg text-[var(--sp-mute)] max-w-2xl leading-relaxed">
-              Integrate TrustPulse into any client website, WordPress site, or Webflow project with a single &lt;script&gt; tag, or query our CORS-enabled JSON endpoints directly.
-            </p>
+            <button
+              type="button"
+              onClick={copyEmbedScript}
+              className="tp-btn-dark px-4 py-2 rounded-xl text-xs font-bold shrink-0 inline-flex items-center gap-1.5 cursor-pointer"
+            >
+              {copiedScript ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+              <span>{copiedScript ? "Copied!" : "Copy Script Tag"}</span>
+            </button>
           </div>
+        </Section>
 
-          {/* Embed Script Quick Start */}
-          <div className="p-6 rounded-3xl border border-[var(--sp-line)] bg-[var(--sp-card)] shadow-sm space-y-3">
-            <div className="flex items-center justify-between">
-              <h2 className="font-bold text-base text-[var(--sp-ink)]">
-                1-Line Universal Script Embed
-              </h2>
-              <button
-                type="button"
-                onClick={handleCopyCode}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--sp-line)] bg-[var(--sp-stage)] hover:bg-[var(--sp-line)] text-xs font-semibold text-[var(--sp-ink)] transition-colors"
-              >
-                {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                <span>{copied ? "Copied!" : "Copy Tag"}</span>
-              </button>
-            </div>
-            <p className="text-xs text-[var(--sp-mute)]">
-              Drop this script into the &lt;head&gt; or &lt;body&gt; of Shopify, WordPress, Webflow, or Squarespace. Automatically initializes and renders floating toasts without any npm build step.
-            </p>
-            <div className="p-3.5 bg-slate-900 text-emerald-400 font-mono text-xs rounded-xl overflow-x-auto border border-slate-800">
-              &lt;script src=&quot;{origin}/api/widget/script?id=widget-apex-toasts&quot; defer&gt;&lt;/script&gt;
-            </div>
-          </div>
-
-          {/* Interactive API Console */}
-          <div className="space-y-6">
-            <h2 className="text-xl font-bold text-[var(--sp-ink)]">
-              Interactive Live API Console
-            </h2>
-
-            <div className="grid lg:grid-cols-12 gap-8 items-start">
-              {/* Endpoint list on Left (5 cols) */}
-              <div className="lg:col-span-5 space-y-3">
+        {/* Interactive Endpoint Explorer */}
+        <Section>
+          <div className="grid lg:grid-cols-12 gap-8 items-start">
+            {/* Sidebar Endpoint List (4 cols) */}
+            <div className="lg:col-span-4 space-y-3">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-mute px-1 block">
+                Available REST Endpoints
+              </span>
+              <div className="space-y-1.5">
                 {ENDPOINTS.map((ep) => {
                   const isSelected = activeEndpoint.id === ep.id;
                   return (
-                    <div
+                    <button
                       key={ep.id}
+                      type="button"
                       onClick={() => handleSelectEndpoint(ep)}
-                      className={`p-4 rounded-2xl border cursor-pointer transition-all ${
+                      className={`w-full text-left p-3.5 rounded-2xl border transition-all cursor-pointer flex flex-col gap-1 ${
                         isSelected
-                          ? "bg-[var(--sp-card)] border-emerald-500 shadow-md ring-1 ring-emerald-500"
-                          : "bg-[var(--sp-stage)]/40 border-[var(--sp-line)] hover:bg-[var(--sp-stage)]"
+                          ? "bg-card border-emerald-500 shadow-md ring-1 ring-emerald-500/20"
+                          : "bg-stage/40 border-line hover:bg-stage/80"
                       }`}
                     >
-                      <div className="flex items-center gap-2 mb-1.5">
+                      <div className="flex items-center gap-2">
                         <span
-                          className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase ${
+                          className={`text-[10px] font-mono font-black uppercase px-2 py-0.5 rounded ${
                             ep.method === "GET"
-                              ? "bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-200"
-                              : "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/60 dark:text-emerald-200"
+                              ? "bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20"
+                              : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
                           }`}
                         >
                           {ep.method}
                         </span>
-                        <code className="text-xs font-mono font-bold text-[var(--sp-ink)]">
+                        <span className="font-mono text-xs font-bold text-ink truncate">
                           {ep.path}
-                        </code>
+                        </span>
                       </div>
-                      <h3 className="font-semibold text-xs text-[var(--sp-ink)]">
+                      <span className="text-xs text-mute line-clamp-1">
                         {ep.title}
-                      </h3>
-                      <p className="text-[11px] text-[var(--sp-mute)] mt-1 line-clamp-2 leading-relaxed">
-                        {ep.description}
-                      </p>
-                    </div>
+                      </span>
+                    </button>
                   );
                 })}
               </div>
 
-              {/* Request & Response on Right (7 cols) */}
-              <div className="lg:col-span-7 bg-[var(--sp-card)] rounded-3xl border border-[var(--sp-line)] p-6 shadow-xl space-y-4">
-                <div className="flex items-center justify-between pb-3 border-b border-[var(--sp-line)]">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-mono font-bold text-emerald-600 uppercase">
-                      {activeEndpoint.method}
-                    </span>
-                    <span className="text-xs font-mono text-[var(--sp-ink)]">
-                      {activeEndpoint.path}
-                    </span>
+              <div className="p-4 rounded-2xl bg-stage/60 border border-line space-y-2 mt-4 text-xs">
+                <span className="font-bold text-ink flex items-center gap-1.5">
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+                  <span>Authentication</span>
+                </span>
+                <p className="text-[11px] text-mute leading-relaxed">
+                  Public endpoints (/api/widget/*, /api/shield/submit) require no authorization headers. Management endpoints require an authenticated workspace session.
+                </p>
+              </div>
+            </div>
+
+            {/* Main Interactive Sandbox & Code Examples (8 cols) */}
+            <div className="lg:col-span-8 bg-card rounded-3xl border border-line p-6 sm:p-8 sp-card-shadow space-y-6">
+              {/* Endpoint Header */}
+              <div className="border-b border-line pb-4">
+                <div className="flex flex-wrap items-center gap-2 mb-2">
+                  <span
+                    className={`text-xs font-mono font-black uppercase px-2.5 py-1 rounded-lg ${
+                      activeEndpoint.method === "GET"
+                        ? "bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20"
+                        : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                    }`}
+                  >
+                    {activeEndpoint.method}
+                  </span>
+                  <span className="font-mono text-sm sm:text-base font-bold text-ink">
+                    {activeEndpoint.path}
+                    {activeEndpoint.queryParams && (
+                      <span className="text-emerald-600 dark:text-emerald-400 font-normal">
+                        {activeEndpoint.queryParams}
+                      </span>
+                    )}
+                  </span>
+                </div>
+                <h3 className="text-base sm:text-lg font-bold text-ink">
+                  {activeEndpoint.title}
+                </h3>
+                <p className="text-xs sm:text-sm text-mute mt-1 leading-relaxed">
+                  {activeEndpoint.description}
+                </p>
+              </div>
+
+              {/* Code Snippet Tabs */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex gap-1 p-1 bg-stage rounded-xl border border-line text-xs font-bold">
+                    <button
+                      type="button"
+                      onClick={() => setActiveCodeTab("curl")}
+                      className={`px-3 py-1 rounded-lg transition cursor-pointer ${
+                        activeCodeTab === "curl"
+                          ? "bg-card text-ink shadow-xs"
+                          : "text-mute hover:text-ink"
+                      }`}
+                    >
+                      cURL
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setActiveCodeTab("node")}
+                      className={`px-3 py-1 rounded-lg transition cursor-pointer ${
+                        activeCodeTab === "node"
+                          ? "bg-card text-ink shadow-xs"
+                          : "text-mute hover:text-ink"
+                      }`}
+                    >
+                      Node.js
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setActiveCodeTab("python")}
+                      className={`px-3 py-1 rounded-lg transition cursor-pointer ${
+                        activeCodeTab === "python"
+                          ? "bg-card text-ink shadow-xs"
+                          : "text-mute hover:text-ink"
+                      }`}
+                    >
+                      Python
+                    </button>
                   </div>
+
                   <button
                     type="button"
-                    onClick={handleExecute}
-                    disabled={loading}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow transition-all disabled:opacity-50"
+                    onClick={() => {
+                      navigator.clipboard.writeText(getActiveCode());
+                    }}
+                    className="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1 cursor-pointer"
                   >
-                    <Play className="w-3.5 h-3.5 fill-current" />
-                    <span>{loading ? "Executing..." : "Execute Request"}</span>
+                    <Copy className="w-3.5 h-3.5" />
+                    <span>Copy Code</span>
                   </button>
                 </div>
 
-                {activeEndpoint.method === "POST" && (
-                  <div>
-                    <label className="block text-xs font-semibold text-[var(--sp-mute)] uppercase tracking-wider mb-1.5">
-                      Request Payload (JSON)
-                    </label>
-                    <textarea
-                      rows={5}
-                      value={requestBody}
-                      onChange={(e) => setRequestBody(e.target.value)}
-                      className="w-full font-mono text-xs p-3 rounded-xl bg-slate-900 text-slate-100 border border-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    />
-                  </div>
-                )}
+                <div className="bg-slate-950 text-slate-200 font-mono text-xs p-4 rounded-2xl border border-slate-800 overflow-x-auto whitespace-pre">
+                  {getActiveCode()}
+                </div>
+              </div>
 
+              {/* Live Request Body Editor (for POST) */}
+              {activeEndpoint.method === "POST" && (
                 <div>
-                  <label className="block text-xs font-semibold text-[var(--sp-mute)] uppercase tracking-wider mb-1.5">
-                    Live Response Output
+                  <label className="block text-xs font-bold uppercase tracking-wider text-mute mb-1.5">
+                    Editable Request Payload (JSON):
                   </label>
-                  <pre className="p-4 rounded-xl bg-slate-950 text-slate-200 font-mono text-xs overflow-x-auto max-h-[360px] border border-slate-800 leading-relaxed">
-                    {responseOutput}
-                  </pre>
+                  <textarea
+                    rows={6}
+                    value={requestBody}
+                    onChange={(e) => setRequestBody(e.target.value)}
+                    className="w-full text-xs font-mono bg-slate-950 text-emerald-400 p-4 rounded-2xl border border-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
+                  />
+                </div>
+              )}
+
+              {/* Execute Button */}
+              <div className="flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={handleExecute}
+                  disabled={loading}
+                  className="tp-btn-dark px-5 py-2.5 rounded-xl text-xs font-bold inline-flex items-center gap-2 cursor-pointer shadow-md disabled:opacity-50"
+                >
+                  <Play className={`w-3.5 h-3.5 ${loading ? "animate-spin" : "fill-current"}`} />
+                  <span>{loading ? "Sending Request..." : "Execute Request in Browser"}</span>
+                </button>
+                <span className="text-[11px] text-mute font-mono">
+                  Origin: {origin}
+                </span>
+              </div>
+
+              {/* Live JSON Response Output */}
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-mute mb-1.5">
+                  Server Response:
+                </label>
+                <div className="bg-slate-950 text-emerald-300 font-mono text-xs p-4 rounded-2xl border border-slate-800 overflow-x-auto max-h-72 whitespace-pre shadow-inner">
+                  {responseOutput}
                 </div>
               </div>
             </div>
           </div>
-        </div>
+        </Section>
       </main>
 
       <PublicFooter isDark={isDark} onToggleTheme={toggleTheme} />

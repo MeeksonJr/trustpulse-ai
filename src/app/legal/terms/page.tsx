@@ -1,12 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import Link from "next/link";
-import {
-  PublicFooter,
-  PublicNavbar,
-  usePublicTheme,
-} from "@/components/ui/PublicChrome";
+import React from "react";
+import { Callout, LegalLayout, LegalSectionBlock } from "@/components/legal/LegalLayout";
 
 const TERMS_SECTIONS = [
   { id: "acceptance", title: "1. Acceptance of Terms & Scope" },
@@ -19,99 +14,80 @@ const TERMS_SECTIONS = [
   { id: "governing", title: "8. Governing Law & Dispute Resolution" },
 ];
 
+const PLANS = [
+  ["Starter", "$19/mo"],
+  ["Pro", "$49/mo"],
+  ["Agency", "$129/mo"],
+];
+
 export default function TermsOfServicePage() {
-  const { isDark, toggleTheme } = usePublicTheme(false);
-  const [activeSection, setActiveSection] = useState("acceptance");
-
   return (
-    <div className="sp-page min-h-screen flex flex-col bg-[var(--sp-paper)] text-[var(--sp-ink)]">
-      <PublicNavbar isDark={isDark} onToggleTheme={toggleTheme} />
-
-      <main className="flex-1 px-4 sm:px-6 lg:px-8 pt-24 pb-16">
-        <div className="max-w-5xl mx-auto space-y-10">
-          <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-mono font-semibold uppercase tracking-wider mb-3">
-              Commercial Agency Licensing
+    <LegalLayout
+      eyebrow="Commercial Agency Licensing"
+      title="Terms of Service"
+      subtitle="The agreement that governs your use of TrustPulse AI funnels, widgets, PulseMind replies and the agency white-label hub."
+      updated="Last updated: October 2026"
+      badges={["Starter, Pro & Agency plans"]}
+      sections={TERMS_SECTIONS}
+    >
+      <LegalSectionBlock id="acceptance" title="1. Acceptance of Terms & Scope">
+        <p>
+          By accessing or subscribing to TrustPulse AI, you agree to be bound by these Terms of Service. If you are an agency using TrustPulse AI on behalf of clients, you represent that you have full authorization to manage their reputation funnels.
+        </p>
+        <div className="grid grid-cols-3 gap-3">
+          {PLANS.map(([n, p]) => (
+            <div key={n} className="rounded-2xl border border-line bg-stage p-4 text-center">
+              <div className="text-xs font-semibold uppercase tracking-wider text-mute">{n}</div>
+              <div className="mt-1 text-xl font-extrabold tracking-[-0.03em] text-ink">{p}</div>
             </div>
-            <h1 className="sp-display text-3xl sm:text-5xl font-bold tracking-tight">
-              Terms of Service
-            </h1>
-            <p className="text-sm text-[var(--sp-mute)] mt-2">
-              Last updated: October 2026 • Governing Starter ($19/mo), Pro ($49/mo), and Agency ($129/mo) plans
-            </p>
-          </div>
-
-          <div className="grid lg:grid-cols-12 gap-8 items-start">
-            {/* Sidebar TOC */}
-            <aside className="lg:col-span-4 bg-[var(--sp-card)] p-4 rounded-2xl border border-[var(--sp-line)] sticky top-20 text-xs space-y-1">
-              <div className="font-mono uppercase text-[var(--sp-mute)] text-[10px] tracking-wider mb-2 px-2">
-                Table of Contents
-              </div>
-              {TERMS_SECTIONS.map((sec) => (
-                <a
-                  key={sec.id}
-                  href={`#${sec.id}`}
-                  onClick={() => setActiveSection(sec.id)}
-                  className={`block px-3 py-2 rounded-xl transition-colors ${
-                    activeSection === sec.id
-                      ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 font-bold"
-                      : "text-[var(--sp-mute)] hover:text-[var(--sp-ink)] hover:bg-[var(--sp-stage)]"
-                  }`}
-                >
-                  {sec.title}
-                </a>
-              ))}
-            </aside>
-
-            {/* Main Content */}
-            <article className="lg:col-span-8 bg-[var(--sp-card)] p-6 sm:p-10 rounded-3xl border border-[var(--sp-line)] space-y-8 text-xs sm:text-sm leading-relaxed text-[var(--sp-ink)]">
-              <section id="acceptance" className="space-y-3">
-                <h2 className="text-lg font-bold">1. Acceptance of Terms</h2>
-                <p className="text-[var(--sp-mute)]">
-                  By accessing or subscribing to TrustPulse AI, you agree to be bound by these Terms of Service. If you are an agency using TrustPulse AI on behalf of clients, you represent that you have full authorization to manage their reputation funnels.
-                </p>
-              </section>
-
-              <section id="reselling" className="space-y-3 pt-6 border-t border-[var(--sp-line)]">
-                <h2 className="text-lg font-bold">2. Agency White-Label &amp; Reselling Rights</h2>
-                <p className="text-[var(--sp-mute)]">
-                  Subscribers to the Agency Plan ($129/mo) are granted a perpetual, royalty-free commercial license to resell TrustPulse reputation management, widgets, and monthly PDF reports to third-party clients under their own agency branding without attribution to TrustPulse AI.
-                </p>
-              </section>
-
-              <section id="gatekeeper" className="space-y-3 pt-6 border-t border-[var(--sp-line)]">
-                <h2 className="text-lg font-bold">3. Review Funnels &amp; FTC Compliance</h2>
-                <p className="text-[var(--sp-mute)]">
-                  TrustPulse AI provides feedback routing tools designed to ensure customer satisfaction. Merchants agree to treat private feedback in good faith and adhere to all FTC guidelines regarding authentic consumer sentiment and voluntary public endorsements.
-                </p>
-              </section>
-
-              <section id="widgets" className="space-y-3 pt-6 border-t border-[var(--sp-line)]">
-                <h2 className="text-lg font-bold">4. Embed Script Usage &amp; Cross-Origin SLA</h2>
-                <p className="text-[var(--sp-mute)]">
-                  Our embed script endpoints (`/api/widget/script`) are served via edge CDN infrastructure with a targeted 99.9% uptime SLA. We maintain wildcard CORS headers so that your client websites load widgets without browser security warnings.
-                </p>
-              </section>
-
-              <section id="billing" className="space-y-3 pt-6 border-t border-[var(--sp-line)]">
-                <h2 className="text-lg font-bold">5. Stripe Subscriptions &amp; Cancellation</h2>
-                <p className="text-[var(--sp-mute)]">
-                  All billing is processed securely via Stripe. Subscriptions renew automatically on a monthly or annual cadence. You may cancel your subscription at any time via the Customer Portal without cancellation penalties.
-                </p>
-              </section>
-
-              <section id="governing" className="space-y-3 pt-6 border-t border-[var(--sp-line)]">
-                <h2 className="text-lg font-bold">8. Governing Law</h2>
-                <p className="text-[var(--sp-mute)]">
-                  These terms are governed by the laws of the State of Delaware, United States, without regard to conflict of law principles.
-                </p>
-              </section>
-            </article>
-          </div>
+          ))}
         </div>
-      </main>
+      </LegalSectionBlock>
 
-      <PublicFooter isDark={isDark} onToggleTheme={toggleTheme} />
-    </div>
+      <LegalSectionBlock id="reselling" title="2. Agency White-Label & Reselling License">
+        <p>
+          Subscribers to the Agency Plan ($129/mo) are granted a perpetual, royalty-free commercial license to resell TrustPulse reputation management, widgets, and monthly PDF reports to third-party clients under their own agency branding without attribution to TrustPulse AI.
+        </p>
+      </LegalSectionBlock>
+
+      <LegalSectionBlock id="gatekeeper" title="3. Review Funnels & FTC Compliance">
+        <p>
+          TrustPulse AI provides feedback routing tools designed to ensure customer satisfaction. Merchants agree to treat private feedback in good faith and adhere to all FTC guidelines regarding authentic consumer sentiment and voluntary public endorsements.
+        </p>
+        <Callout tone="warn" title="Authentic reviews only">
+          You may not use TrustPulse to fabricate reviews, offer prohibited incentives, or suppress customers&apos; ability to post public reviews on their own.
+        </Callout>
+      </LegalSectionBlock>
+
+      <LegalSectionBlock id="widgets" title="4. Embed Script Usage & Cross-Origin SLA">
+        <p>
+          Our embed script endpoints (<code>/api/widget/script</code>) are served via edge CDN infrastructure with a targeted 99.9% uptime SLA. We maintain wildcard CORS headers so that your client websites load widgets without browser security warnings.
+        </p>
+      </LegalSectionBlock>
+
+      <LegalSectionBlock id="billing" title="5. Stripe Subscriptions & Cancellation">
+        <p>
+          All billing is processed securely via Stripe. Subscriptions renew automatically on a monthly or annual cadence. You may cancel your subscription at any time via the Customer Portal without cancellation penalties.
+        </p>
+      </LegalSectionBlock>
+
+      <LegalSectionBlock id="intellectual" title="6. Intellectual Property & AI Content">
+        <p>
+          You retain ownership of your reviews, branding and client data. TrustPulse retains ownership of the platform, widgets and software. Replies drafted by PulseMind™ are provided for you to review and publish; you are responsible for the content you post under your business name.
+        </p>
+      </LegalSectionBlock>
+
+      <LegalSectionBlock id="liability" title="7. Disclaimers & Limitation of Liability">
+        <p>
+          The service is provided &ldquo;as is&rdquo;. We do not guarantee specific star ratings, rankings or revenue outcomes. To the maximum extent permitted by law, TrustPulse AI&apos;s aggregate liability is limited to the fees you paid in the twelve months before the claim.
+        </p>
+      </LegalSectionBlock>
+
+      <LegalSectionBlock id="governing" title="8. Governing Law & Dispute Resolution">
+        <p>
+          These terms are governed by the laws of the State of Delaware, United States, without regard to conflict of law principles.
+        </p>
+      </LegalSectionBlock>
+    </LegalLayout>
   );
 }
