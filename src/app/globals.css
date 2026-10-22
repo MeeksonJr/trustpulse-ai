@@ -12,7 +12,7 @@ html[data-sp-theme="light"],
 html.light {
   --sp-paper: #ffffff;
   --sp-card: #ffffff;
-  --sp-stage: #f8fafc;
+  --sp-stage: #f3f6fb;
   --sp-ink: #0f172a;
   --sp-mute: #475569;
   --sp-line: #e2e8f0;
@@ -143,6 +143,74 @@ html.dark {
 .sp-input::placeholder { color: var(--sp-mute); opacity: 0.8; }
 .sp-card-shadow { box-shadow: 0 1px 3px 0 rgba(0,0,0,0.05), 0 14px 28px -8px rgba(0,0,0,0.06); }
 html[data-sp-theme="dark"] .sp-card-shadow { box-shadow: 0 0 0 1px var(--sp-line), 0 20px 35px -15px rgba(0, 0, 0, 0.7); }
+
+/* ---------- v2 Hero: soft sky gradient + engineered grid ---------- */
+.tp-hero-bg {
+  position: relative;
+  background:
+    radial-gradient(60% 50% at 50% 0%, rgba(16, 185, 129, 0.16), transparent 70%),
+    radial-gradient(40% 40% at 90% 10%, rgba(37, 99, 235, 0.12), transparent 70%),
+    linear-gradient(180deg, #e8f4ff 0%, #f6fbff 55%, #ffffff 100%);
+}
+.tp-hero-bg::before {
+  content: "";
+  position: absolute; inset: 0; pointer-events: none;
+  background-image:
+    linear-gradient(to right, rgba(15, 23, 42, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(15, 23, 42, 0.06) 1px, transparent 1px);
+  background-size: 120px 120px;
+  background-position: center top;
+  -webkit-mask-image: radial-gradient(70% 60% at 50% 25%, #000 30%, transparent 75%);
+  mask-image: radial-gradient(70% 60% at 50% 25%, #000 30%, transparent 75%);
+}
+html[data-sp-theme="dark"] .tp-hero-bg {
+  background:
+    radial-gradient(60% 50% at 50% 0%, rgba(16, 185, 129, 0.18), transparent 70%),
+    radial-gradient(40% 40% at 90% 10%, rgba(59, 130, 246, 0.14), transparent 70%),
+    linear-gradient(180deg, #0b1220 0%, #09090b 70%);
+}
+html[data-sp-theme="dark"] .tp-hero-bg::before {
+  background-image:
+    linear-gradient(to right, rgba(248, 250, 252, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(248, 250, 252, 0.06) 1px, transparent 1px);
+}
+.tp-node {
+  position: absolute; width: 18px; height: 18px; border-radius: 9999px;
+  background: var(--sp-card); border: 1px solid var(--sp-line);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08); pointer-events: none;
+}
+.tp-glass {
+  background: color-mix(in srgb, var(--sp-card) 78%, transparent);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid color-mix(in srgb, var(--sp-line) 80%, transparent);
+}
+.tp-window-shadow { box-shadow: 0 40px 80px -30px rgba(15, 23, 42, 0.35), 0 0 0 1px var(--sp-line); }
+@keyframes tp-float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+.tp-float { animation: tp-float 7s ease-in-out infinite; }
+.tp-float-2 { animation: tp-float 8.5s ease-in-out -3s infinite; }
+@keyframes tp-pop { from { opacity: 0; transform: translateY(14px) scale(.96); } to { opacity: 1; transform: none; } }
+.tp-pop { animation: tp-pop .8s cubic-bezier(.22,1,.36,1) both; }
+.tp-eyebrow-pill {
+  display: inline-flex; align-items: center; gap: .5rem; padding: .35rem .8rem; border-radius: 9999px;
+  font-size: .75rem; font-weight: 600; color: var(--sp-ink);
+  background: color-mix(in srgb, var(--sp-card) 80%, transparent); border: 1px solid var(--sp-line);
+  box-shadow: 0 1px 2px rgba(15,23,42,.05);
+}
+.tp-btn-dark {
+  display: inline-flex; align-items: center; justify-content: center; gap: .55rem;
+  background: var(--sp-ink); color: var(--sp-paper); border-radius: 9999px;
+  padding: .85rem 1.5rem; font-weight: 600; font-size: .95rem;
+  box-shadow: 0 10px 24px -10px rgba(15,23,42,.55), inset 0 1px 0 rgba(255,255,255,.12);
+  transition: transform .25s cubic-bezier(.22,1,.36,1), box-shadow .25s;
+}
+.tp-btn-dark:hover { transform: translateY(-2px); box-shadow: 0 16px 30px -12px rgba(16,185,129,.55), inset 0 1px 0 rgba(255,255,255,.12); }
+.tp-btn-light {
+  display: inline-flex; align-items: center; justify-content: center; gap: .55rem;
+  background: var(--sp-card); color: var(--sp-ink); border: 1px solid var(--sp-line); border-radius: 9999px;
+  padding: .85rem 1.4rem; font-weight: 600; font-size: .95rem; transition: transform .25s, border-color .2s;
+}
+.tp-btn-light:hover { transform: translateY(-2px); border-color: var(--sp-ink); }
 
 /* ---------- Tilt + diagonal layout helpers ---------- */
 .sp-tilt-l { transform: rotate(-3deg); }

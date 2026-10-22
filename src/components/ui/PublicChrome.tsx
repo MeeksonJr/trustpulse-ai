@@ -175,7 +175,7 @@ export function PublicNavbar({
   return (
     <header className="fixed top-0 left-0 right-0 z-50 px-2.5 sm:px-4 lg:px-6 pt-2 sm:pt-3 pointer-events-none transition-all duration-300">
       <div
-        className={`mx-auto max-w-5xl xl:max-w-6xl w-full flex items-center justify-between gap-2 sm:gap-4 rounded-full border border-line bg-card/95 backdrop-blur-md px-3 sm:px-4 py-2 pointer-events-auto transition-all duration-300 ${
+        className={`mx-auto max-w-5xl xl:max-w-6xl w-full flex items-center justify-between gap-2 sm:gap-4 relative rounded-2xl border border-line bg-card/80 backdrop-blur-xl px-3 sm:px-4 py-2 pointer-events-auto transition-all duration-300 ${
           isScrolled
             ? "shadow-xl border-line/90 bg-card/98 scale-[0.99]"
             : "sp-card-shadow"
@@ -187,69 +187,41 @@ export function PublicNavbar({
         </Link>
 
         {/* Desktop Navigation Links */}
-        <nav className="hidden md:flex items-center gap-0.5 lg:gap-1 text-[0.8rem] font-medium min-w-0">
-          <Link
-            href="/#shield"
-            className="px-2.5 lg:px-3 py-1.5 rounded-full text-mute hover:text-ink hover:bg-stage transition-colors"
-          >
-            Review Shield
-          </Link>
-          <Link
-            href="/#widgets"
-            className="px-2.5 lg:px-3 py-1.5 rounded-full text-mute hover:text-ink hover:bg-stage transition-colors"
-          >
-            Widgets
-          </Link>
-          <Link
-            href="/#ai-replies"
-            className="px-2.5 lg:px-3 py-1.5 rounded-full text-mute hover:text-ink hover:bg-stage transition-colors"
-          >
-            AI Replies
-          </Link>
-          <Link
-            href="/#roi"
-            className="px-2.5 lg:px-3 py-1.5 rounded-full text-mute hover:text-ink hover:bg-stage transition-colors"
-          >
-            Agency ROI
-          </Link>
-          <Link
-            href="/#pricing"
-            className="px-2.5 lg:px-3 py-1.5 rounded-full text-mute hover:text-ink hover:bg-stage transition-colors"
-          >
-            Pricing
-          </Link>
-          <Link
-            href="/audit"
-            className="px-2.5 lg:px-3 py-1.5 rounded-full text-mute hover:text-ink hover:bg-stage transition-colors"
-          >
-            Audit Scanner
-          </Link>
-          <Link
-            href="/docs"
-            className="px-2.5 lg:px-3 py-1.5 rounded-full text-mute hover:text-ink hover:bg-stage transition-colors"
-          >
-            Docs
-          </Link>
+        <nav className="hidden md:flex items-center gap-0.5 lg:gap-1 text-[0.85rem] font-medium min-w-0 absolute left-1/2 -translate-x-1/2">
+          {[
+            { href: "/#shield", label: "Review Shield" },
+            { href: "/#widgets", label: "Widgets" },
+            { href: "/#ai-replies", label: "AI Replies" },
+            { href: "/#pricing", label: "Pricing" },
+            { href: "/docs", label: "Docs" },
+          ].map((n) => (
+            <Link
+              key={n.label}
+              href={n.href}
+              className="px-3 lg:px-3.5 py-1.5 rounded-full text-mute hover:text-ink hover:bg-stage transition-colors"
+            >
+              {n.label}
+            </Link>
+          ))}
         </nav>
 
         {/* Right CTA cluster */}
-        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 ml-auto">
           <ThemeToggleButton isDark={isDark} onToggle={onToggleTheme} />
 
           <Link
-            href="/r/apex-dental"
-            target="_blank"
-            className="hidden sm:inline-flex items-center gap-1 text-[0.78rem] font-semibold text-emerald-600 hover:text-emerald-700 px-3 py-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 transition-colors"
+            href="/login"
+            className="hidden sm:inline-flex items-center text-[0.85rem] font-semibold text-ink px-3.5 py-1.5 rounded-full border border-line bg-card hover:border-ink transition-colors"
           >
-            <span>Live Funnel</span>
-            <span aria-hidden>↗</span>
+            Sign in
           </Link>
 
           <Link
             href="/dashboard"
-            className="inline-flex items-center justify-center rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-[0.78rem] px-3.5 sm:px-4 py-1.5 transition-colors shadow-sm"
+            className="inline-flex items-center justify-center gap-1.5 rounded-full bg-ink text-paper font-semibold text-[0.85rem] px-4 py-1.5 transition-all hover:-translate-y-0.5 shadow-[0_8px_20px_-8px_rgba(15,23,42,0.6)]"
           >
-            Dashboard
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400" />
+            Live demo
           </Link>
 
           {/* Mobile hamburger button */}

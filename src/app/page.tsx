@@ -33,6 +33,7 @@ import {
   DiagonalRibbon,
   CustomerReviewMarquee,
 } from "@/components/ui/DiagonalTicker";
+import { HeroShowcase } from "@/components/ui/HeroShowcase";
 import {
   GoogleBadge,
   TrustpilotBadge,
@@ -94,68 +95,63 @@ export default function HomePage() {
         {/* =========================================================================
             1. HERO SECTION: High-Contrast Modern SaaS Presentation
            ========================================================================= */}
-        <section className="relative px-4 sm:px-6 lg:px-8 pt-24 sm:pt-32 pb-16 sm:pb-24 overflow-hidden bg-gradient-to-b from-slate-50/80 via-white to-white dark:from-[#0f1115] dark:via-[#09090b] dark:to-[#09090b]">
-          <div className="mx-auto max-w-6xl">
-            {/* Top pill badge */}
-            <div className="flex justify-center mb-6">
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-emerald-500/30 bg-emerald-50/80 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 text-xs font-mono font-medium shadow-xs">
-                <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span>Autonomous Reputation SaaS</span>
-                <span className="text-emerald-600 dark:text-emerald-400 font-bold">• 100% Turnkey Commercial Asset</span>
-              </div>
-            </div>
+        <section className="tp-hero-bg relative px-4 sm:px-6 lg:px-8 pt-28 sm:pt-36 pb-20 sm:pb-28 overflow-hidden">
+          {/* Engineered-grid nodes */}
+          <span className="tp-node hidden md:block" style={{ left: "calc(50% - 480px)", top: "120px" }} />
+          <span className="tp-node hidden md:block" style={{ left: "calc(50% + 460px)", top: "240px" }} />
+          <span className="tp-node hidden lg:block" style={{ left: "calc(50% - 600px)", top: "360px" }} />
+          <span className="tp-node hidden lg:block" style={{ left: "calc(50% + 590px)", top: "90px" }} />
 
-            {/* Main Title & Value Proposition */}
-            <div className="text-center max-w-4xl mx-auto space-y-6">
-              <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.08]">
-                Protect your 5-star reputation.
+          <div className="relative mx-auto max-w-6xl">
+            <div className="text-center max-w-4xl mx-auto">
+              <Link href="/dashboard/agency" className="tp-eyebrow-pill tp-pop hover:border-emerald-500/60 transition-colors">
+                <span className="rounded-full bg-emerald-500 px-1.5 py-0.5 text-[0.6rem] font-bold text-white">NEW</span>
+                Live Google Maps sync for every client
+                <ArrowRight className="h-3 w-3" />
+              </Link>
+
+              <h1
+                className="tp-pop mt-6 text-[clamp(2.6rem,7.2vw,5.6rem)] font-extrabold tracking-[-0.032em] leading-[1.02] text-ink"
+                style={{ animationDelay: "0.08s" }}
+              >
+                Protect every star.
                 <br />
-                Turn happy clients into{" "}
-                <span className="text-emerald-600 dark:text-emerald-400 underline decoration-emerald-500/30 decoration-wavy decoration-2">
-                  automatic social proof.
-                </span>
+                Turn happy customers into{" "}
+                <span className="bg-gradient-to-r from-emerald-500 to-cyan-500 bg-clip-text text-transparent">proof.</span>
               </h1>
-              <p className="text-base sm:text-xl text-slate-600 dark:text-slate-300 max-w-2xl mx-auto leading-relaxed">
-                The smart QR review funnel that <strong className="text-slate-900 dark:text-white font-semibold">shields your business from unfair 1-star public Google reviews</strong> while streaming verified 5-star customer praise into embeddable website widgets.
+
+              <p
+                className="tp-pop mt-6 text-base sm:text-xl text-mute max-w-2xl mx-auto leading-relaxed"
+                style={{ animationDelay: "0.16s" }}
+              >
+                TrustPulse intercepts unhappy walk-outs before they post on Google, and streams verified 5-star praise to your
+                website. One automated platform.
               </p>
 
-              {/* CTAs */}
-              <div className="flex flex-wrap items-center justify-center gap-3.5 pt-4">
-                <Link
-                  href="/dashboard"
-                  className="inline-flex items-center justify-center gap-2 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-sm sm:text-base px-7 py-3.5 shadow-lg shadow-emerald-600/25 transition-all hover:scale-[1.02] active:scale-[0.98]"
-                >
-                  <span>Launch Live Demo Workspace</span>
+              <div
+                className="tp-pop mt-9 flex flex-wrap items-center justify-center gap-3"
+                style={{ animationDelay: "0.22s" }}
+              >
+                <Link href="/dashboard" className="tp-btn-dark">
+                  Launch live demo
                   <ArrowRight className="w-4 h-4" />
                 </Link>
-                <Link
-                  href="/audit"
-                  className="inline-flex items-center justify-center gap-2 rounded-full border border-emerald-500/40 bg-emerald-50/90 dark:bg-emerald-950/50 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 text-emerald-800 dark:text-emerald-300 font-semibold text-sm sm:text-base px-6 py-3.5 transition-all shadow-xs"
-                >
-                  <Activity className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                  <span>Free Revenue Leak Scanner</span>
+                <Link href="/audit" className="tp-btn-light">
+                  <Activity className="w-4 h-4 text-emerald-500" />
+                  Free revenue-leak scan
                 </Link>
                 <Link
                   href="/r/apex-dental"
                   target="_blank"
-                  className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-900 dark:text-white font-semibold text-sm sm:text-base px-6 py-3.5 transition-all shadow-xs"
+                  className="inline-flex items-center gap-1.5 px-3 py-3 text-sm font-semibold text-mute hover:text-ink transition-colors"
                 >
-                  <QrCode className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                  <span>Scan Live QR Funnel ↗</span>
+                  <QrCode className="w-4 h-4" />
+                  Try the QR funnel ↗
                 </Link>
-                <button
-                  type="button"
-                  onClick={() => setShowLiveToast(!showLiveToast)}
-                  className="inline-flex items-center justify-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-50/70 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 font-semibold text-sm px-5 py-3.5 transition-all hover:bg-emerald-100/70 cursor-pointer"
-                >
-                  <Sparkles className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                  <span>{showLiveToast ? "Hide Live Toast" : "Simulate Live Toast"}</span>
-                </button>
               </div>
 
-              {/* Verified Platform Badges Cluster */}
-              <div className="pt-6 flex flex-wrap items-center justify-center gap-2.5 sm:gap-3 text-xs">
-                <span className="text-slate-500 dark:text-slate-400 font-medium mr-1">Direct Sync With:</span>
+              <div className="pt-8 flex flex-wrap items-center justify-center gap-2.5 sm:gap-3 text-xs">
+                <span className="text-mute font-medium mr-1">Syncs with</span>
                 <GoogleBadge />
                 <TrustpilotBadge />
                 <ProductHuntBadge />
@@ -163,62 +159,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* =========================================================================
-                HERO VISUAL SHOWCASE: Photorealistic Dual-Device Hardware & SaaS Grid
-               ========================================================================= */}
-            <div className="mt-14 max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
-              {/* Left: Physical Acrylic Stand & iPhone 16 Pro Rating Funnel */}
-              <div className="lg:col-span-5 rounded-3xl overflow-hidden border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#121316] shadow-xl hover:shadow-2xl transition-all duration-300 group">
-                <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-950">
-                  <img
-                    src="/images/hero-device-showcase.jpg"
-                    alt="TrustPulse AI Acrylic Counter Stand and Smartphone Rating Funnel"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/25 to-transparent flex items-end p-5">
-                    <div>
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500 text-slate-950 text-[10px] font-mono font-bold uppercase tracking-wider mb-1">
-                        <span className="w-1.5 h-1.5 rounded-full bg-slate-950 animate-pulse" />
-                        Physical Reception Stand
-                      </span>
-                      <p className="text-white text-xs font-semibold">
-                        Sleek acrylic QR stand placed on reception desks • Under 0.4s scan time
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Right: Floating MacBook Pro SaaS Command Center */}
-              <div className="lg:col-span-7 rounded-3xl overflow-hidden border border-slate-200 dark:border-zinc-800 bg-white dark:bg-[#121316] shadow-xl hover:shadow-2xl transition-all duration-300 group">
-                <div className="relative aspect-[16/10] w-full overflow-hidden bg-slate-950">
-                  <img
-                    src="/images/dashboard-analytics-preview.jpg"
-                    alt="TrustPulse AI Reputation Command Center Dashboard Mockup"
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/25 to-transparent flex items-end p-5">
-                    <div className="flex items-center justify-between w-full">
-                      <div>
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-900/90 text-emerald-400 text-[10px] font-mono font-bold uppercase tracking-wider mb-1 border border-emerald-500/30">
-                          Reputation Command Center
-                        </span>
-                        <p className="text-white text-xs font-semibold">
-                          Live sentiment radar • 99.2% negative reviews shielded • $28,400 revenue protected
-                        </p>
-                      </div>
-                      <Link
-                        href="/dashboard"
-                        className="hidden sm:inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-white text-slate-900 text-xs font-bold hover:bg-slate-100 transition-colors shadow"
-                      >
-                        <span>Live Demo</span>
-                        <ArrowRight className="w-3 h-3" />
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <HeroShowcase />
 
             {/* =========================================================================
                 THE REVIEW SHIELD IN ACTION: Before vs After Transformation (High Contrast)
