@@ -272,7 +272,7 @@ export default function ArticlePreviewPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `seospace-article-${article.focusKeyword
+    a.download = `trustpulse-article-${article.focusKeyword
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")}.json`;
     a.click();
@@ -293,7 +293,7 @@ export default function ArticlePreviewPage() {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "");
-  const displayDomain = article.linkedDomain || "seospace.ai";
+  const displayDomain = article.linkedDomain || "trustpulse.ai";
   const readingTimeMin = Math.max(1, Math.ceil(grade.wordCount / 200));
 
   return (

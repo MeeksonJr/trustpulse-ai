@@ -18,22 +18,22 @@ export async function POST(req: Request) {
 
     if (isDiscord) {
       payload = {
-        username: "Seospace Lead Engine",
-        avatar_url: "https://seospace-kappa.vercel.app/favicon.ico",
+        username: "TrustPulse AI Reputation Engine",
+        avatar_url: "https://trustpulse-ai-phi.vercel.app/favicon.ico",
         embeds: [
           {
-            title: "🎯 New Inbound Agency Lead Captured!",
-            description: "A high-intent prospect just audited their website via your embedded Seospace lead widget.",
-            color: 0xff4d14, // Vermilion accent
+            title: "🎯 New Inbound Reputation Lead Captured!",
+            description: "A high-intent business prospect just audited their reputation via your embedded TrustPulse widget.",
+            color: 0x10b981, // Emerald accent
             fields: [
               { name: "Prospect Name", value: "Marcus Vance", inline: true },
               { name: "Work Email", value: "marcus@luminahealth.co", inline: true },
-              { name: "Audited Website", value: "https://luminahealth.co", inline: false },
-              { name: "Audit Score", value: "61/100 (Grade D)", inline: true },
-              { name: "Est. Retainer Pipeline", value: "$1,500/mo", inline: true },
+              { name: "Audited Business", value: "Lumina Health & Wellness", inline: false },
+              { name: "Current Rating", value: "3.8★ (Harvard benchmark leak: $24,800/yr)", inline: true },
+              { name: "Est. Reputation Retainer", value: "$1,500/mo", inline: true },
             ],
             footer: {
-              text: "Seospace AI Lead Dispatcher • Discord Webhook Active",
+              text: "TrustPulse AI Dispatcher • Discord Webhook Active",
             },
             timestamp: new Date().toISOString(),
           },
@@ -41,7 +41,7 @@ export async function POST(req: Request) {
       };
     } else if (isSlack) {
       payload = {
-        text: "🎯 *New Inbound Agency Lead Captured!*\n*Prospect:* Marcus Vance (marcus@luminahealth.co)\n*Website:* https://luminahealth.co\n*Score:* 61/100\n*Estimated Retainer:* $1,500/mo",
+        text: "🎯 *New Inbound Reputation Lead Captured!*\n*Prospect:* Marcus Vance (marcus@luminahealth.co)\n*Business:* Lumina Health & Wellness\n*Rating:* 3.8★\n*Estimated Retainer:* $1,500/mo",
       };
     } else {
       // Generic Webhook payload (Zapier, Make, HubSpot, webhook.site)
@@ -53,12 +53,12 @@ export async function POST(req: Request) {
           name: "Marcus Vance",
           email: "marcus@luminahealth.co",
           websiteUrl: "https://luminahealth.co",
-          auditScore: 61,
-          letterGrade: "D",
+          businessName: "Lumina Health & Wellness",
+          rating: 3.8,
           status: "New",
           estimatedPipelineValue: 1500,
         },
-        source: "seospace-lead-widget",
+        source: "trustpulse-lead-widget",
       };
     }
 

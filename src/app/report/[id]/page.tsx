@@ -126,7 +126,7 @@ export default function AuditReportPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `seospace-audit-${report.domain}-${new Date()
+    a.download = `trustpulse-audit-${report.domain}-${new Date()
       .toISOString()
       .slice(0, 10)}.json`;
     a.click();
@@ -153,7 +153,7 @@ export default function AuditReportPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `seospace-diagnostic-${report.domain}-${new Date()
+    a.download = `trustpulse-diagnostic-${report.domain}-${new Date()
       .toISOString()
       .slice(0, 10)}.csv`;
     a.click();

@@ -29,7 +29,7 @@ export function SeospaceLogo({
         className={`${mark} ${markBg} rounded-[10px] grid grid-cols-2 gap-[3px] p-[7px]`}
         aria-hidden="true"
       >
-        <span className="rounded-full bg-[#ff4d14]" />
+        <span className="rounded-full bg-[#10b981]" />
         <span className={`rounded-full ${dot}`} />
         <span className={`rounded-full ${dot}`} />
         <span className={`rounded-full ${dot}`} />
@@ -42,8 +42,8 @@ export function SeospaceLogo({
           letterSpacing: "-0.04em",
         }}
       >
-        {customName || "seospace"}
-        {!customName && <span className="text-[#ff4d14]">+</span>}
+        {customName || "trustpulse"}
+        {!customName && <span className="text-[#10b981]">.ai</span>}
       </span>
     </div>
   );

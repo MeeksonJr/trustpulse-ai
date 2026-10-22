@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       report: savedReport,
       cached: false,
-      mode: "seospace-neural-live-scan",
+      mode: "trustpulse-neural-live-scan",
     });
   } catch (err: unknown) {
     const message =
