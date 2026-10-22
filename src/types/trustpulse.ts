@@ -45,6 +45,7 @@ export interface PrivateFeedback {
 
 export interface Workspace {
   id: string;
+  userId?: string;
   name: string;
   slug: string;
   category: string;

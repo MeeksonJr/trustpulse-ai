@@ -16,10 +16,12 @@ import {
   Sliders,
 } from "lucide-react";
 import { TrustPulseStore } from "@/lib/storage/trustpulse-store";
+import { getWorkspaceUser, WorkspaceUser } from "@/lib/storage/workspace-store";
 import { ReviewItem, AIReplyOption, Workspace } from "@/types/trustpulse";
 import { GoogleBadge, TrustpilotBadge } from "@/components/ui/PlatformBadges";
 
 export default function AIReplyStudioPage() {
+  const [currentUser, setCurrentUser] = useState<WorkspaceUser | null>(null);
   const [workspaces, setWorkspaces] = useState<Workspace[]>(() => TrustPulseStore.getWorkspaces());
   const [selectedWsId, setSelectedWsId] = useState<string>(() => {
     if (typeof window !== "undefined") {
@@ -31,18 +33,34 @@ export default function AIReplyStudioPage() {
   const ws = workspaces.find((w) => w.id === selectedWsId) || workspaces[0];
 
   const [reviews, setReviews] = useState<ReviewItem[]>(() => TrustPulseStore.getReviews(ws?.id));
+  const [filterRating, setFilterRating] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState<"recent" | "oldest" | "rating_desc" | "rating_asc">("recent");
   const [selectedReview, setSelectedReview] = useState<ReviewItem | null>(() => reviews[0] || null);
   const [loadingAI, setLoadingAI] = useState(false);
   const [options, setOptions] = useState<AIReplyOption[]>([]);
   const [copiedType, setCopiedType] = useState<string | null>(null);
 
   useEffect(() => {
-    const wsList = TrustPulseStore.getWorkspaces();
+    const user = getWorkspaceUser();
+    setCurrentUser(user);
+    const wsList = TrustPulseStore.getWorkspaces(user?.id);
     setWorkspaces(wsList);
     const stored = localStorage.getItem("tp_active_workspace");
     if (stored && wsList.some((w) => w.id === stored)) {
       setSelectedWsId(stored);
+    } else if (wsList[0]) {
+      setSelectedWsId(wsList[0].id);
     }
+
+    fetch(`/api/workspaces?userId=${encodeURIComponent(user?.id || "demo")}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.workspaces) && data.workspaces.length > 0) {
+          setWorkspaces(data.workspaces);
+        }
+      })
+      .catch(() => {});
 
     const handleWsChange = (e: Event) => {
       const customEvent = e as CustomEvent<string>;
@@ -88,12 +106,17 @@ export default function AIReplyStudioPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           reviewId: review.id,
+          reviewData: review,
           workspaceId: ws?.id,
+          businessName: ws?.name,
+          businessCategory: ws?.category,
         }),
       });
       const data = await res.json();
-      if (data.success) {
+      if (data.success && Array.isArray(data.options)) {
         setOptions(data.options);
+      } else {
+        console.warn("AI reply notice:", data.error);
       }
     } catch (err) {
       console.error(err);
@@ -107,6 +130,48 @@ export default function AIReplyStudioPage() {
     setCopiedType(type);
     setTimeout(() => setCopiedType(null), 2000);
   };
+
+  const ratingCounts = React.useMemo(() => {
+    const counts: Record<number, number> = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+    for (const r of reviews) {
+      const star = Math.max(1, Math.min(5, Math.floor(r.rating || 5)));
+      counts[star] = (counts[star] || 0) + 1;
+    }
+    return counts;
+  }, [reviews]);
+
+  const filteredReviews = React.useMemo(() => {
+    return reviews
+      .filter((r) => {
+        if (filterRating !== "all") {
+          const star = Math.max(1, Math.min(5, Math.floor(r.rating || 5)));
+          if (star !== Number(filterRating)) return false;
+        }
+        if (
+          searchQuery &&
+          !r.authorName.toLowerCase().includes(searchQuery.toLowerCase()) &&
+          !r.reviewText.toLowerCase().includes(searchQuery.toLowerCase())
+        ) {
+          return false;
+        }
+        return true;
+      })
+      .sort((a, b) => {
+        if (sortBy === "recent") {
+          return new Date(b.reviewDate).getTime() - new Date(a.reviewDate).getTime();
+        }
+        if (sortBy === "oldest") {
+          return new Date(a.reviewDate).getTime() - new Date(b.reviewDate).getTime();
+        }
+        if (sortBy === "rating_desc") {
+          return b.rating - a.rating;
+        }
+        if (sortBy === "rating_asc") {
+          return a.rating - b.rating;
+        }
+        return 0;
+      });
+  }, [reviews, filterRating, searchQuery, sortBy]);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-200">
@@ -144,48 +209,117 @@ export default function AIReplyStudioPage() {
       <div className="grid lg:grid-cols-12 gap-8 items-start">
         {/* LEFT COLUMN: REVIEW SELECTOR */}
         <div className="lg:col-span-5 bg-card rounded-3xl border border-line sp-card-shadow overflow-hidden">
-          <div className="p-5 border-b border-line flex items-center justify-between">
-            <h2 className="font-extrabold text-xs uppercase tracking-wider text-mute">
-              Incoming Reviews Queue ({reviews.length})
-            </h2>
-            <span className="text-[10px] font-mono text-mute">Click to synthesize</span>
+          <div className="p-4 sm:p-5 border-b border-line space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="font-extrabold text-xs uppercase tracking-wider text-mute">
+                Reviews Queue ({filteredReviews.length} of {reviews.length})
+              </h2>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as any)}
+                className="bg-stage border border-line rounded-lg px-2 py-0.5 text-[11px] font-semibold text-ink focus:outline-none focus:ring-1 focus:ring-emerald-500 cursor-pointer"
+              >
+                <option value="recent">Newest</option>
+                <option value="oldest">Oldest</option>
+                <option value="rating_desc">Highest (5★)</option>
+                <option value="rating_asc">Lowest (1★)</option>
+              </select>
+            </div>
+
+            {/* Search Input */}
+            <div className="relative">
+              <Search className="w-3.5 h-3.5 text-mute absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Search reviews..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full text-xs bg-stage/50 border border-line rounded-xl pl-8 pr-3 py-1.5 text-ink focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              />
+            </div>
+
+            {/* Star Filter Pills */}
+            <div className="flex items-center gap-1 overflow-x-auto pb-1 text-[11px] font-bold">
+              <button
+                type="button"
+                onClick={() => setFilterRating("all")}
+                className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer shrink-0 ${
+                  filterRating === "all"
+                    ? "bg-slate-900 text-white dark:bg-emerald-600"
+                    : "bg-stage text-mute hover:text-ink"
+                }`}
+              >
+                All ({reviews.length})
+              </button>
+              {[5, 4, 3, 2, 1].map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setFilterRating(filterRating === String(s) ? "all" : String(s))}
+                  className={`px-2 py-1 rounded-lg transition-all cursor-pointer flex items-center gap-0.5 shrink-0 ${
+                    filterRating === String(s)
+                      ? "bg-amber-500 text-slate-950 font-black"
+                      : "bg-stage text-mute hover:text-ink"
+                  }`}
+                >
+                  <span>{s}★</span>
+                  <span className="opacity-75 text-[10px]">({ratingCounts[s] || 0})</span>
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="divide-y divide-line max-h-[580px] overflow-y-auto">
-            {reviews.map((r) => {
-              const isSelected = selectedReview?.id === r.id;
-              return (
-                <div
-                  key={r.id}
-                  onClick={() => generateReplies(r)}
-                  className={`p-4 sm:p-5 cursor-pointer transition-all ${
-                    isSelected
-                      ? "bg-emerald-500/10 border-l-4 border-emerald-500"
-                      : "hover:bg-stage/60"
-                  }`}
+            {filteredReviews.length === 0 ? (
+              <div className="p-8 text-center text-xs text-mute space-y-2">
+                <p>No reviews found matching filters.</p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFilterRating("all");
+                    setSearchQuery("");
+                  }}
+                  className="text-emerald-600 dark:text-emerald-400 font-bold hover:underline"
                 >
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="font-extrabold text-xs text-ink">
-                      {r.authorName}
-                    </span>
-                    <div className="flex text-amber-400 text-xs">
-                      {Array.from({ length: r.rating }).map((_, i) => (
-                        <Star key={i} className="w-3 h-3 fill-amber-400" />
-                      ))}
+                  Clear filters
+                </button>
+              </div>
+            ) : (
+              filteredReviews.map((r) => {
+                const isSelected = selectedReview?.id === r.id;
+                return (
+                  <div
+                    key={r.id}
+                    onClick={() => generateReplies(r)}
+                    className={`p-4 sm:p-5 cursor-pointer transition-all ${
+                      isSelected
+                        ? "bg-emerald-500/10 border-l-4 border-emerald-500"
+                        : "hover:bg-stage/60"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="font-extrabold text-xs text-ink">
+                        {r.authorName}
+                      </span>
+                      <div className="flex text-amber-400 text-xs gap-0.5">
+                        {Array.from({ length: Math.min(5, Math.max(0, Math.floor(r.rating || 0))) }).map((_, i) => (
+                          <Star key={i} className="w-3 h-3 fill-amber-400" />
+                        ))}
+                      </div>
+                    </div>
+                    <p className="text-xs text-mute line-clamp-2 leading-relaxed">
+                      &ldquo;{r.reviewText}&rdquo;
+                    </p>
+                    <div className="mt-2.5 flex items-center justify-between text-[10px]">
+                      <span className="uppercase font-bold text-mute">{r.platform}</span>
+                      <span className="text-emerald-600 dark:text-emerald-400 font-bold">
+                        {isSelected ? "Active Review" : "Tap to Generate AI →"}
+                      </span>
                     </div>
                   </div>
-                  <p className="text-xs text-mute line-clamp-2 leading-relaxed">
-                    &ldquo;{r.reviewText}&rdquo;
-                  </p>
-                  <div className="mt-2.5 flex items-center justify-between text-[10px]">
-                    <span className="uppercase font-bold text-mute">{r.platform}</span>
-                    <span className="text-emerald-600 dark:text-emerald-400 font-bold">
-                      {isSelected ? "Active Review" : "Tap to Generate AI →"}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })
+            )}
           </div>
         </div>
 

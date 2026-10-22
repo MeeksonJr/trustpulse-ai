@@ -7,6 +7,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const result: GooglePlaceResult = body.business;
+    const userId: string = body.userId || "demo";
 
     if (!result || !result.name || !result.slug) {
       return NextResponse.json(
@@ -15,7 +16,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { workspace, reviews, widgets } = TrustPulseStore.registerGoogleClient(result);
+    const { workspace, reviews, widgets } = TrustPulseStore.registerGoogleClient(result, userId);
 
     // Sync to Supabase PostgreSQL in background
     try {
@@ -23,6 +24,7 @@ export async function POST(request: Request) {
       if (supabase) {
         await supabase.from("trustpulse_workspaces").upsert({
           id: workspace.id,
+          user_id: userId,
           name: workspace.name,
           slug: workspace.slug,
           category: workspace.category,

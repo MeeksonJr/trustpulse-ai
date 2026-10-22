@@ -7,6 +7,7 @@ export async function GET(req: NextRequest) {
   try {
     const slug = req.nextUrl.searchParams.get("slug");
     const id = req.nextUrl.searchParams.get("id");
+    const userId = req.nextUrl.searchParams.get("userId") || undefined;
 
     if (slug) {
       let ws: Workspace | undefined = TrustPulseStore.getWorkspaceBySlug(slug);
@@ -96,14 +97,30 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ success: true, workspace: ws });
     }
 
-    const workspaces = TrustPulseStore.getWorkspaces();
+    const workspaces = TrustPulseStore.getWorkspaces(userId);
     try {
       const supabase = getServerSupabaseAdmin();
       if (supabase) {
-        const { data } = await supabase
+        let query = supabase
           .from("trustpulse_workspaces")
           .select("*")
           .order("created_at", { ascending: false });
+
+        const isDemo =
+          !userId ||
+          userId === "demo" ||
+          userId === "usr-partner" ||
+          userId === "usr-demo-agency";
+
+        if (isDemo) {
+          query = query.or(
+            "user_id.is.null,user_id.eq.demo,user_id.eq.usr-partner,user_id.eq.usr-demo-agency"
+          );
+        } else {
+          query = query.eq("user_id", userId);
+        }
+
+        const { data } = await query;
 
         if (data && data.length > 0) {
           const seen = new Set(workspaces.map((w) => w.id));
@@ -111,6 +128,7 @@ export async function GET(req: NextRequest) {
             if (!seen.has(row.id)) {
               workspaces.push({
                 id: row.id,
+                userId: row.user_id || "demo",
                 name: row.name,
                 slug: row.slug,
                 category: row.category,
@@ -163,9 +181,11 @@ export async function POST(req: NextRequest) {
     }
 
     const cleanSlug = slug.toLowerCase().trim().replace(/[^a-z0-9-]+/g, "-");
+    const userId = body.userId || "demo";
 
     const newWorkspace: Workspace = {
       id: body.id || `ws-${cleanSlug}-${Date.now().toString(36)}`,
+      userId: userId,
       name: name.trim(),
       slug: cleanSlug,
       category: category || "Local Business",
@@ -192,6 +212,7 @@ export async function POST(req: NextRequest) {
       if (supabase) {
         await supabase.from("trustpulse_workspaces").upsert({
           id: saved.id,
+          user_id: saved.userId || "demo",
           name: saved.name,
           slug: saved.slug,
           category: saved.category,

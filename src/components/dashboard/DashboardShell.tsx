@@ -31,7 +31,7 @@ import {
 } from "lucide-react";
 import { TrustPulseLogo } from "@/components/ui/TrustPulseLogo";
 import { TrustPulseStore } from "@/lib/storage/trustpulse-store";
-import { logoutWorkspaceUser } from "@/lib/storage/workspace-store";
+import { logoutWorkspaceUser, getWorkspaceUser, WorkspaceUser } from "@/lib/storage/workspace-store";
 import { Workspace } from "@/types/trustpulse";
 
 interface DashboardShellProps {
@@ -56,6 +56,7 @@ interface NavGroup {
 export function DashboardShell({ children }: DashboardShellProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const [currentUser, setCurrentUser] = useState<WorkspaceUser | null>(null);
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [selectedWsId, setSelectedWsId] = useState<string>("ws-apex-dental");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -85,8 +86,10 @@ export function DashboardShell({ children }: DashboardShellProps) {
       setIsDark(isDarkMode);
     }
 
-    // Load workspaces & sync active selection
-    const wsList = TrustPulseStore.getWorkspaces();
+    // Load active user and scoped workspaces
+    const user = getWorkspaceUser();
+    setCurrentUser(user);
+    const wsList = TrustPulseStore.getWorkspaces(user?.id);
     setWorkspaces(wsList);
     let activeId = wsList[0]?.id || "ws-apex-dental";
     if (typeof window !== "undefined") {
@@ -101,6 +104,19 @@ export function DashboardShell({ children }: DashboardShellProps) {
     const newCount = grievances.filter((g) => g.status === "new").length;
     setUnreadGrievanceCount(newCount > 0 ? newCount : 1);
 
+    // Refresh from Supabase API to keep in sync
+    fetch(`/api/workspaces?userId=${encodeURIComponent(user?.id || "demo")}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.workspaces) && data.workspaces.length > 0) {
+          setWorkspaces(data.workspaces);
+          if (!data.workspaces.some((w: Workspace) => w.id === activeId)) {
+            setSelectedWsId(data.workspaces[0].id);
+          }
+        }
+      })
+      .catch(() => {});
+
     // Listen for cross-component workspace events
     const handleWsChange = (e: Event) => {
       const customEvent = e as CustomEvent<string>;
@@ -109,7 +125,8 @@ export function DashboardShell({ children }: DashboardShellProps) {
       }
     };
     const handleWsListUpdate = () => {
-      const updated = TrustPulseStore.getWorkspaces();
+      const u = getWorkspaceUser();
+      const updated = TrustPulseStore.getWorkspaces(u?.id);
       setWorkspaces(updated);
     };
 
@@ -416,13 +433,22 @@ export function DashboardShell({ children }: DashboardShellProps) {
         <div className="flex items-center justify-between pt-1 text-xs">
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="w-8 h-8 rounded-full bg-slate-900 dark:bg-slate-800 text-white flex items-center justify-center font-bold text-xs ring-1 ring-line shrink-0">
-              DT
+              {currentUser?.name
+                ? currentUser.name
+                    .split(" ")
+                    .map((n) => n[0])
+                    .join("")
+                    .slice(0, 2)
+                    .toUpperCase()
+                : "TP"}
             </div>
             <div className="min-w-0">
               <div className="font-bold text-ink text-xs leading-none truncate">
-                Dr. Thorne
+                {currentUser?.name || "Demo Practice Owner"}
               </div>
-              <span className="text-[10px] text-mute truncate block mt-0.5">Practice Owner</span>
+              <span className="text-[10px] text-mute truncate block mt-0.5">
+                {currentUser?.email || "demo@trustpulse.ai"}
+              </span>
             </div>
           </div>
 

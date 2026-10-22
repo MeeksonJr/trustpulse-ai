@@ -34,13 +34,13 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { TrustPulseStore } from "@/lib/storage/trustpulse-store";
+import { getWorkspaceUser, WorkspaceUser } from "@/lib/storage/workspace-store";
 import { Workspace } from "@/types/trustpulse";
 import type { GooglePlaceResult } from "@/lib/places/google-maps";
 
 export default function AgencyHubPage() {
-  const [workspaces, setWorkspaces] = useState<Workspace[]>(
-    TrustPulseStore.getWorkspaces()
-  );
+  const [currentUser, setCurrentUser] = useState<WorkspaceUser | null>(null);
+  const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
 
   // Modal State
   const [showAddModal, setShowAddModal] = useState(false);
@@ -83,10 +83,42 @@ export default function AgencyHubPage() {
   const [newClientGoogleUrl, setNewClientGoogleUrl] = useState("https://maps.google.com");
 
   // Selected client for report preview & printing
-  const [reportingClient, setReportingClient] = useState<Workspace>(workspaces[0]);
+  const [reportingClient, setReportingClient] = useState<Workspace | null>(null);
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportReviews, setReportReviews] = useState<any[]>([]);
   const [loadingReviews, setLoadingReviews] = useState(false);
+
+  React.useEffect(() => {
+    const user = getWorkspaceUser();
+    setCurrentUser(user);
+    const initialList = TrustPulseStore.getWorkspaces(user?.id);
+    setWorkspaces(initialList);
+    if (initialList.length > 0) {
+      setReportingClient(initialList[0]);
+    }
+
+    fetch(`/api/workspaces?userId=${encodeURIComponent(user?.id || "demo")}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.workspaces)) {
+          setWorkspaces(data.workspaces);
+          if (data.workspaces.length > 0) {
+            setReportingClient((prev) => prev || data.workspaces[0]);
+          }
+        }
+      })
+      .catch(() => {});
+
+    const handleUpdate = () => {
+      const u = getWorkspaceUser();
+      setWorkspaces(TrustPulseStore.getWorkspaces(u?.id));
+    };
+
+    window.addEventListener("trustpulse_workspaces_updated", handleUpdate);
+    return () => {
+      window.removeEventListener("trustpulse_workspaces_updated", handleUpdate);
+    };
+  }, []);
 
   const totalClients = workspaces.length;
   const estimatedAgencyMRR = totalClients * 149;
@@ -132,7 +164,10 @@ export default function AgencyHubPage() {
       const res = await fetch("/api/workspaces/create-from-google", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ business: detectedResult }),
+        body: JSON.stringify({
+          business: detectedResult,
+          userId: currentUser?.id || "demo",
+        }),
       });
 
       const data = await res.json();
@@ -143,7 +178,7 @@ export default function AgencyHubPage() {
             TrustPulseStore.addReview(rev);
           }
         }
-        setWorkspaces([data.workspace, ...TrustPulseStore.getWorkspaces().filter((w) => w.id !== data.workspace.id)]);
+        setWorkspaces(TrustPulseStore.getWorkspaces(currentUser?.id));
         if (typeof window !== "undefined") {
           try {
             localStorage.setItem("tp_active_workspace", data.workspace.id);
@@ -177,6 +212,7 @@ export default function AgencyHubPage() {
 
     const newWs: Workspace = {
       id: `ws-${cleanSlug}-${Date.now().toString(36)}`,
+      userId: currentUser?.id || "demo",
       name: newClientName.trim(),
       slug: cleanSlug,
       category: newClientCategory,
@@ -193,7 +229,7 @@ export default function AgencyHubPage() {
     };
 
     TrustPulseStore.saveWorkspace(newWs);
-    setWorkspaces([...TrustPulseStore.getWorkspaces()]);
+    setWorkspaces(TrustPulseStore.getWorkspaces(currentUser?.id));
     if (typeof window !== "undefined") {
       try {
         localStorage.setItem("tp_active_workspace", newWs.id);
@@ -332,79 +368,114 @@ export default function AgencyHubPage() {
           </span>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {workspaces.map((w) => (
-            <div
-              key={w.id}
-              className="bg-card rounded-3xl border border-line p-6 sp-card-shadow hover:-translate-y-0.5 transition-all flex flex-col justify-between space-y-5"
+        {workspaces.length === 0 ? (
+          <div className="bg-card rounded-3xl border border-line p-10 text-center space-y-4">
+            <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto">
+              <Building2 className="w-8 h-8" />
+            </div>
+            <div className="max-w-md mx-auto space-y-1">
+              <h3 className="font-extrabold text-lg text-ink">No Business Clients Added Yet</h3>
+              <p className="text-xs text-mute leading-relaxed">
+                Connect your business or client practices via Google Maps or add them manually to automatically sync reviews, launch QR review funnels, and activate negative review shields.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setModalMode("google_maps");
+                setShowAddModal(true);
+              }}
+              className="tp-btn-dark px-5 py-2.5 rounded-xl text-xs font-bold inline-flex items-center gap-2 shadow-sm cursor-pointer"
             >
-              <div className="space-y-3">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <div
-                      className="w-11 h-11 rounded-2xl flex items-center justify-center text-white font-extrabold text-base shadow-sm shrink-0"
-                      style={{ backgroundColor: w.brandColor || "#059669" }}
-                    >
-                      {w.name.charAt(0)}
+              <Plus className="w-4 h-4" />
+              <span>Connect First Business via Google Maps</span>
+            </button>
+          </div>
+        ) : (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {workspaces.map((w) => (
+              <div
+                key={w.id}
+                className="bg-card rounded-3xl border border-line p-6 sp-card-shadow hover:-translate-y-0.5 transition-all flex flex-col justify-between space-y-5"
+              >
+                <div className="space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="w-11 h-11 rounded-2xl flex items-center justify-center text-white font-extrabold text-base shadow-sm shrink-0"
+                        style={{ backgroundColor: w.brandColor || "#059669" }}
+                      >
+                        {w.name.charAt(0)}
+                      </div>
+                      <div>
+                        <h3 className="font-extrabold text-base text-ink line-clamp-1">
+                          {w.name}
+                        </h3>
+                        <p className="text-xs text-mute">{w.category}</p>
+                      </div>
+                    </div>
+                    <span className="text-xs font-mono font-bold text-amber-500 bg-amber-500/10 px-2.5 py-1 rounded-xl shrink-0">
+                      ★ {w.stats?.averageRating || "4.9"}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-xs p-3 rounded-2xl bg-stage border border-line">
+                    <div>
+                      <span className="text-mute text-[10px] uppercase font-bold block">Reviews</span>
+                      <span className="font-extrabold text-ink">{w.stats?.totalReviews || 12} Total</span>
                     </div>
                     <div>
-                      <h3 className="font-extrabold text-base text-ink line-clamp-1">
-                        {w.name}
-                      </h3>
-                      <p className="text-xs text-mute">{w.category}</p>
+                      <span className="text-mute text-[10px] uppercase font-bold block">Shielded</span>
+                      <span className="font-extrabold text-rose-500">{w.stats?.shieldedReviews || 0} Grievances</span>
                     </div>
                   </div>
-                  <span className="text-xs font-mono font-bold text-amber-500 bg-amber-500/10 px-2.5 py-1 rounded-xl shrink-0">
-                    ★ {w.stats?.averageRating || "4.9"}
-                  </span>
-                </div>
 
-                <div className="grid grid-cols-2 gap-2 text-xs p-3 rounded-2xl bg-stage border border-line">
-                  <div>
-                    <span className="text-mute text-[10px] uppercase font-bold block">Reviews</span>
-                    <span className="font-extrabold text-ink">{w.stats?.totalReviews || 12} Total</span>
-                  </div>
-                  <div>
-                    <span className="text-mute text-[10px] uppercase font-bold block">Shielded</span>
-                    <span className="font-extrabold text-rose-500">{w.stats?.shieldedReviews || 0} Grievances</span>
+                  <div className="text-xs text-mute flex items-center justify-between pt-1 font-mono">
+                    <span>/r/{w.slug}</span>
+                    <Link
+                      href={`/r/${w.slug}`}
+                      target="_blank"
+                      className="text-emerald-600 dark:text-emerald-400 hover:underline inline-flex items-center gap-1 font-bold"
+                    >
+                      <span>View Funnel</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </Link>
                   </div>
                 </div>
 
-                <div className="text-xs text-mute flex items-center justify-between pt-1 font-mono">
-                  <span>/r/{w.slug}</span>
-                  <Link
-                    href={`/r/${w.slug}`}
-                    target="_blank"
-                    className="text-emerald-600 dark:text-emerald-400 hover:underline inline-flex items-center gap-1 font-bold"
+                <div className="pt-3 border-t border-line flex items-center justify-between gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleOpenClientReport(w)}
+                    className="tp-btn-light px-3 py-1.5 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer hover:border-emerald-500/40"
+                    title="View full multi-page executive deliverable & export to PDF"
                   >
-                    <span>View Funnel</span>
-                    <ExternalLink className="w-3 h-3" />
+                    <FileText className="w-3.5 h-3.5 text-emerald-500" />
+                    <span>Client PDF Report</span>
+                  </button>
+
+                  <Link
+                    href="/dashboard"
+                    onClick={() => {
+                      if (typeof window !== "undefined") {
+                        try {
+                          localStorage.setItem("tp_active_workspace", w.id);
+                          window.dispatchEvent(new CustomEvent("trustpulse_ws_changed", { detail: w.id }));
+                        } catch {
+                          //
+                        }
+                      }
+                    }}
+                    className="tp-btn-dark px-3 py-1.5 rounded-xl text-xs font-bold inline-flex items-center gap-1 cursor-pointer"
+                  >
+                    <span>Open Workspace</span>
+                    <ArrowRight className="w-3 h-3" />
                   </Link>
                 </div>
               </div>
-
-              <div className="pt-3 border-t border-line flex items-center justify-between gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleOpenClientReport(w)}
-                  className="tp-btn-light px-3 py-1.5 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer hover:border-emerald-500/40"
-                  title="View full multi-page executive deliverable & export to PDF"
-                >
-                  <FileText className="w-3.5 h-3.5 text-emerald-500" />
-                  <span>Client PDF Report</span>
-                </button>
-
-                <Link
-                  href="/dashboard"
-                  className="tp-btn-dark px-3 py-1.5 rounded-xl text-xs font-bold inline-flex items-center gap-1 cursor-pointer"
-                >
-                  <span>Open Workspace</span>
-                  <ArrowRight className="w-3 h-3" />
-                </Link>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* GOOGLE MAPS AUTO-ONBOARDING MODAL */}

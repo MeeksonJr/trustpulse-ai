@@ -19,6 +19,7 @@ interface TrustPulseDbSchema {
 const INITIAL_WORKSPACES: Workspace[] = [
   {
     id: "ws-apex-dental",
+    userId: "demo",
     name: "Apex Cosmetic Dentistry & Orthodontics",
     slug: "apex-dental",
     category: "Dental & Healthcare",
@@ -38,6 +39,7 @@ const INITIAL_WORKSPACES: Workspace[] = [
   },
   {
     id: "ws-bayview-auto",
+    userId: "demo",
     name: "Bayview Precision German Auto Repair",
     slug: "bayview-auto",
     category: "Automotive Services",
@@ -56,6 +58,7 @@ const INITIAL_WORKSPACES: Workspace[] = [
   },
   {
     id: "ws-nimbus-saas",
+    userId: "demo",
     name: "Nimbus Analytics Platform",
     slug: "nimbus-saas",
     category: "B2B SaaS & Tech",
@@ -497,8 +500,26 @@ function getStore(): TrustPulseDbSchema {
 }
 
 export const TrustPulseStore = {
-  getWorkspaces(): Workspace[] {
-    return getStore().workspaces;
+  getWorkspaces(userId?: string): Workspace[] {
+    const all = getStore().workspaces;
+    const isDemo =
+      !userId ||
+      userId === "demo" ||
+      userId === "usr-partner" ||
+      userId === "usr-demo-agency";
+
+    if (isDemo) {
+      // Demo mode or unauthenticated visitor: return baseline demo clients
+      return all.filter(
+        (w) =>
+          !w.userId ||
+          w.userId === "demo" ||
+          w.userId === "usr-partner" ||
+          w.userId === "usr-demo-agency"
+      );
+    }
+    // Authenticated user: return ONLY their personal/agency workspaces
+    return all.filter((w) => w.userId === userId);
   },
 
   getWorkspaceBySlug(slug: string): Workspace | undefined {
@@ -641,7 +662,7 @@ export const TrustPulseStore = {
     return config;
   },
 
-  registerGoogleClient(result: GooglePlaceResult): {
+  registerGoogleClient(result: GooglePlaceResult, userId?: string): {
     workspace: Workspace;
     reviews: ReviewItem[];
     widgets: WidgetConfig[];
@@ -650,6 +671,7 @@ export const TrustPulseStore = {
 
     const newWs: Workspace = {
       id: wsId,
+      userId: userId || "demo",
       name: result.name,
       slug: result.slug,
       category: result.category,

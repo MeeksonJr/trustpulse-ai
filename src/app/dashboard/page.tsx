@@ -32,10 +32,12 @@ import {
   TrendingDown,
 } from "lucide-react";
 import { TrustPulseStore } from "@/lib/storage/trustpulse-store";
+import { getWorkspaceUser, WorkspaceUser } from "@/lib/storage/workspace-store";
 import { Workspace, ReviewItem, PrivateFeedback } from "@/types/trustpulse";
 import { GoogleBadge, TrustpilotBadge } from "@/components/ui/PlatformBadges";
 
 export default function DashboardPage() {
+  const [currentUser, setCurrentUser] = useState<WorkspaceUser | null>(null);
   const [workspaces, setWorkspaces] = useState<Workspace[]>(() => TrustPulseStore.getWorkspaces());
   const [selectedWsId, setSelectedWsId] = useState<string>(() => {
     if (typeof window !== "undefined") {
@@ -55,6 +57,8 @@ export default function DashboardPage() {
 
   // Filter & Search states
   const [filterPlatform, setFilterPlatform] = useState<"all" | "google" | "trustpilot" | "shield">("all");
+  const [filterRating, setFilterRating] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<"recent" | "oldest" | "rating_desc" | "rating_asc">("recent");
   const [searchQuery, setSearchQuery] = useState("");
 
   // Add Review Modal State
@@ -77,12 +81,26 @@ export default function DashboardPage() {
 
   useEffect(() => {
     // Initial sync
-    const wsList = TrustPulseStore.getWorkspaces();
+    const user = getWorkspaceUser();
+    setCurrentUser(user);
+    const wsList = TrustPulseStore.getWorkspaces(user?.id);
     setWorkspaces(wsList);
     const stored = localStorage.getItem("tp_active_workspace");
     if (stored && wsList.some((w) => w.id === stored)) {
       setSelectedWsId(stored);
+    } else if (wsList[0]) {
+      setSelectedWsId(wsList[0].id);
     }
+
+    // Refresh from Supabase API
+    fetch(`/api/workspaces?userId=${encodeURIComponent(user?.id || "demo")}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.workspaces) && data.workspaces.length > 0) {
+          setWorkspaces(data.workspaces);
+        }
+      })
+      .catch(() => {});
 
     const handleWsChange = (e: Event) => {
       const customEvent = e as CustomEvent<string>;
@@ -92,7 +110,8 @@ export default function DashboardPage() {
     };
 
     const handleWsListUpdate = () => {
-      const updated = TrustPulseStore.getWorkspaces();
+      const u = getWorkspaceUser();
+      const updated = TrustPulseStore.getWorkspaces(u?.id);
       setWorkspaces(updated);
     };
 
@@ -177,11 +196,14 @@ export default function DashboardPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           reviewId: rev.id,
+          reviewData: rev,
           workspaceId: currentWorkspace?.id,
+          businessName: currentWorkspace?.name,
+          businessCategory: currentWorkspace?.category,
         }),
       });
       const data = await res.json();
-      if (data.success) {
+      if (data.success && Array.isArray(data.options)) {
         setAiOptions(data.options);
       }
     } catch (err) {
@@ -197,17 +219,48 @@ export default function DashboardPage() {
     setTimeout(() => setCopiedIndex(null), 2000);
   };
 
-  const filteredReviews = reviewsList.filter((r) => {
-    if (filterPlatform !== "all" && r.platform !== filterPlatform) return false;
-    if (
-      searchQuery &&
-      !r.authorName.toLowerCase().includes(searchQuery.toLowerCase()) &&
-      !r.reviewText.toLowerCase().includes(searchQuery.toLowerCase())
-    ) {
-      return false;
+  const ratingCounts = React.useMemo(() => {
+    const counts: Record<number, number> = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+    for (const r of reviewsList) {
+      const star = Math.max(1, Math.min(5, Math.floor(r.rating || 5)));
+      counts[star] = (counts[star] || 0) + 1;
     }
-    return true;
-  });
+    return counts;
+  }, [reviewsList]);
+
+  const filteredReviews = React.useMemo(() => {
+    return reviewsList
+      .filter((r) => {
+        if (filterPlatform !== "all" && r.platform !== filterPlatform) return false;
+        if (filterRating !== "all") {
+          const star = Math.max(1, Math.min(5, Math.floor(r.rating || 5)));
+          if (star !== Number(filterRating)) return false;
+        }
+        if (
+          searchQuery &&
+          !r.authorName.toLowerCase().includes(searchQuery.toLowerCase()) &&
+          !r.reviewText.toLowerCase().includes(searchQuery.toLowerCase())
+        ) {
+          return false;
+        }
+        return true;
+      })
+      .sort((a, b) => {
+        if (sortBy === "recent") {
+          return new Date(b.reviewDate).getTime() - new Date(a.reviewDate).getTime();
+        }
+        if (sortBy === "oldest") {
+          return new Date(a.reviewDate).getTime() - new Date(b.reviewDate).getTime();
+        }
+        if (sortBy === "rating_desc") {
+          return b.rating - a.rating;
+        }
+        if (sortBy === "rating_asc") {
+          return a.rating - b.rating;
+        }
+        return 0;
+      });
+  }, [reviewsList, filterPlatform, filterRating, searchQuery, sortBy]);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-200">
@@ -383,107 +436,200 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Platform Filter Pills */}
-          <div className="px-6 flex items-center gap-2 overflow-x-auto pb-2 text-xs font-bold">
-            <button
-              type="button"
-              onClick={() => setFilterPlatform("all")}
-              className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
-                filterPlatform === "all"
-                  ? "bg-slate-900 text-white dark:bg-emerald-600 shadow-xs"
-                  : "bg-stage text-mute hover:text-ink"
-              }`}
-            >
-              All Platforms ({reviewsList.length})
-            </button>
-            <button
-              type="button"
-              onClick={() => setFilterPlatform("google")}
-              className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
-                filterPlatform === "google"
-                  ? "bg-slate-900 text-white dark:bg-emerald-600 shadow-xs"
-                  : "bg-stage text-mute hover:text-ink"
-              }`}
-            >
-              Google Maps
-            </button>
-            <button
-              type="button"
-              onClick={() => setFilterPlatform("trustpilot")}
-              className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
-                filterPlatform === "trustpilot"
-                  ? "bg-slate-900 text-white dark:bg-emerald-600 shadow-xs"
-                  : "bg-stage text-mute hover:text-ink"
-              }`}
-            >
-              Trustpilot
-            </button>
+          {/* Filter Controls: Star Ratings + Platforms + Sorting */}
+          <div className="px-5 sm:px-6 space-y-3 pb-2">
+            {/* Row 1: Star Rating Filter Chips */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs font-bold">
+              <span className="text-[11px] font-mono uppercase text-mute mr-1 shrink-0">Rating:</span>
+              <button
+                type="button"
+                onClick={() => setFilterRating("all")}
+                className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer shrink-0 ${
+                  filterRating === "all"
+                    ? "bg-slate-900 text-white dark:bg-emerald-600 shadow-xs"
+                    : "bg-stage text-mute hover:text-ink"
+                }`}
+              >
+                All Stars ({reviewsList.length})
+              </button>
+              {[5, 4, 3, 2, 1].map((stars) => (
+                <button
+                  key={stars}
+                  type="button"
+                  onClick={() => setFilterRating(filterRating === String(stars) ? "all" : String(stars))}
+                  className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer flex items-center gap-1 shrink-0 ${
+                    filterRating === String(stars)
+                      ? "bg-amber-500 text-slate-950 font-black shadow-xs"
+                      : "bg-stage text-mute hover:text-ink"
+                  }`}
+                >
+                  <span>{stars}</span>
+                  <Star className="w-3 h-3 fill-current inline" />
+                  <span className="text-[10px] opacity-75">({ratingCounts[stars] || 0})</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Row 2: Platform Chips & Sort Select */}
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-line/60">
+              <div className="flex items-center gap-1.5 overflow-x-auto text-xs font-bold">
+                <span className="text-[11px] font-mono uppercase text-mute mr-1 shrink-0">Source:</span>
+                <button
+                  type="button"
+                  onClick={() => setFilterPlatform("all")}
+                  className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
+                    filterPlatform === "all"
+                      ? "bg-emerald-600 text-white shadow-xs"
+                      : "bg-stage text-mute hover:text-ink"
+                  }`}
+                >
+                  All Platforms
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFilterPlatform("google")}
+                  className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
+                    filterPlatform === "google"
+                      ? "bg-emerald-600 text-white shadow-xs"
+                      : "bg-stage text-mute hover:text-ink"
+                  }`}
+                >
+                  Google Maps
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFilterPlatform("trustpilot")}
+                  className={`px-3 py-1.5 rounded-xl transition-all cursor-pointer ${
+                    filterPlatform === "trustpilot"
+                      ? "bg-emerald-600 text-white shadow-xs"
+                      : "bg-stage text-mute hover:text-ink"
+                  }`}
+                >
+                  Trustpilot
+                </button>
+
+                {(filterRating !== "all" || filterPlatform !== "all" || searchQuery) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFilterRating("all");
+                      setFilterPlatform("all");
+                      setSearchQuery("");
+                    }}
+                    className="px-2.5 py-1 rounded-xl text-[11px] font-semibold text-rose-500 hover:bg-rose-500/10 transition-colors ml-2 cursor-pointer"
+                  >
+                    Reset Filters
+                  </button>
+                )}
+              </div>
+
+              {/* Sort Order Dropdown */}
+              <div className="flex items-center gap-2 text-xs">
+                <span className="text-mute font-medium text-[11px]">Sort:</span>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as any)}
+                  className="bg-stage border border-line rounded-xl px-2.5 py-1 text-xs font-bold text-ink focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
+                >
+                  <option value="recent">Newest First</option>
+                  <option value="oldest">Oldest First</option>
+                  <option value="rating_desc">Highest Rating (5★ → 1★)</option>
+                  <option value="rating_asc">Lowest Rating (1★ → 5★)</option>
+                </select>
+              </div>
+            </div>
           </div>
 
           {/* Reviews List */}
           <div className="divide-y divide-line">
-            {filteredReviews.map((rev) => (
-              <div
-                key={rev.id}
-                className="p-5 sm:p-6 space-y-3 hover:bg-stage/40 transition-colors"
-              >
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-slate-900 dark:bg-slate-800 text-white font-black text-sm flex items-center justify-center shrink-0">
-                      {rev.authorName.charAt(0)}
-                    </div>
-                    <div>
-                      <div className="text-sm font-extrabold text-ink flex items-center gap-2">
-                        <span>{rev.authorName}</span>
-                        {rev.platform === "google" && <GoogleBadge />}
-                        {rev.platform === "trustpilot" && <TrustpilotBadge />}
-                        {rev.platform !== "google" && rev.platform !== "trustpilot" && (
-                          <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded bg-stage text-mute">
-                            {rev.platform}
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-xs text-mute">
-                        {rev.authorRole || "Verified Client"} {rev.authorLocation ? `• ${rev.authorLocation}` : ""}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2.5">
-                    <div className="flex text-amber-400 gap-0.5">
-                      {Array.from({ length: rev.rating }).map((_, i) => (
-                        <Star key={i} className="w-3.5 h-3.5 fill-amber-400" />
-                      ))}
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => handleGenerateAI(rev)}
-                      className="tp-btn-light px-3 py-1.5 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 cursor-pointer"
-                    >
-                      <Sparkles className="w-3.5 h-3.5" />
-                      <span>AI Reply</span>
-                    </button>
-                  </div>
+            {filteredReviews.length === 0 ? (
+              <div className="p-12 text-center space-y-3">
+                <div className="w-12 h-12 rounded-2xl bg-stage border border-line text-mute flex items-center justify-center mx-auto">
+                  <Filter className="w-6 h-6" />
                 </div>
-
-                <p className="text-xs sm:text-sm text-ink leading-relaxed">
-                  &ldquo;{rev.reviewText}&rdquo;
+                <h3 className="font-extrabold text-sm text-ink">No Reviews Match Filters</h3>
+                <p className="text-xs text-mute max-w-sm mx-auto">
+                  No testimonials found matching your selected star rating ({filterRating}★) or platform filter.
                 </p>
-
-                {rev.aiReply && (
-                  <div className="p-3.5 rounded-2xl bg-stage/70 border border-line text-xs space-y-1">
-                    <div className="font-bold text-ink flex items-center gap-1.5 text-[11px]">
-                      <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
-                      <span>Generated Response ({rev.aiReply.type}):</span>
-                    </div>
-                    <p className="text-mute italic leading-relaxed text-[11px]">
-                      &ldquo;{rev.aiReply.content}&rdquo;
-                    </p>
-                  </div>
-                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFilterRating("all");
+                    setFilterPlatform("all");
+                    setSearchQuery("");
+                  }}
+                  className="tp-btn-light px-4 py-2 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 cursor-pointer"
+                >
+                  <span>Reset All Filters</span>
+                </button>
               </div>
-            ))}
+            ) : (
+              filteredReviews.map((rev) => (
+                <div
+                  key={rev.id}
+                  className="p-5 sm:p-6 space-y-3 hover:bg-stage/40 transition-colors"
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-slate-900 dark:bg-slate-800 text-white font-black text-sm flex items-center justify-center shrink-0">
+                        {rev.authorName.charAt(0)}
+                      </div>
+                      <div>
+                        <div className="text-sm font-extrabold text-ink flex items-center gap-2">
+                          <span>{rev.authorName}</span>
+                          {rev.platform === "google" && <GoogleBadge />}
+                          {rev.platform === "trustpilot" && <TrustpilotBadge />}
+                          {rev.platform !== "google" && rev.platform !== "trustpilot" && (
+                            <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded bg-stage text-mute">
+                              {rev.platform}
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-xs text-mute">
+                          {rev.authorRole || "Verified Client"} {rev.authorLocation ? `• ${rev.authorLocation}` : ""}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2.5">
+                      <div className="flex text-amber-400 gap-0.5">
+                        {Array.from({ length: Math.min(5, Math.max(0, Math.floor(rev.rating || 0))) }).map((_, i) => (
+                          <Star key={i} className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                        ))}
+                        {Array.from({ length: 5 - Math.min(5, Math.max(0, Math.floor(rev.rating || 0))) }).map((_, i) => (
+                          <Star key={i} className="w-3.5 h-3.5 text-mute/30" />
+                        ))}
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleGenerateAI(rev)}
+                        className="tp-btn-light px-3 py-1.5 rounded-xl text-xs font-bold inline-flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 cursor-pointer"
+                      >
+                        <Sparkles className="w-3.5 h-3.5" />
+                        <span>AI Reply</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  <p className="text-xs sm:text-sm text-ink leading-relaxed">
+                    &ldquo;{rev.reviewText}&rdquo;
+                  </p>
+
+                  {rev.aiReply && (
+                    <div className="p-3.5 rounded-2xl bg-stage/70 border border-line text-xs space-y-1">
+                      <div className="font-bold text-ink flex items-center gap-1.5 text-[11px]">
+                        <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
+                        <span>Generated Response ({rev.aiReply.type}):</span>
+                      </div>
+                      <p className="text-mute italic leading-relaxed text-[11px]">
+                        &ldquo;{rev.aiReply.content}&rdquo;
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
           </div>
         </div>
 
